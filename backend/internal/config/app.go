@@ -4,8 +4,9 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/rajaabluu/ershop-api/internal/handler"
-	"github.com/rajaabluu/ershop-api/internal/handler/middleware"
+	"github.com/rajaabluu/ershop-api/internal/http/handler"
+	"github.com/rajaabluu/ershop-api/internal/http/handler/middleware"
+	"github.com/rajaabluu/ershop-api/internal/http/route"
 	"github.com/rajaabluu/ershop-api/internal/repository"
 	"github.com/rajaabluu/ershop-api/internal/service"
 	"github.com/sirupsen/logrus"
@@ -24,16 +25,16 @@ type Config struct {
 
 func Init(config *Config) *chi.Mux {
 
-	customerRepository := repository.NewCustomerRepository()
+	customerRepository := repository.NewUserRepository()
 	productRepository := repository.NewProductRepository()
 
-	customerService := service.NewCustomerService(config.Config, config.Database, config.Validator, config.Logger, customerRepository)
+	customerService := service.NewUserService(config.Config, config.Database, config.Validator, config.Logger, customerRepository)
 	productService := service.NewProductService(config.Database, config.Validator, config.Uploader, config.Logger, productRepository)
 
 	authHandler := handler.NewAuthHandler(config.Logger, customerService)
 	productHandler := handler.NewProductHandler(config.Logger, productService)
 
-	route := &RouteConfig{
+	route := route.Config{
 		Router:         config.Router,
 		AuthHandler:    authHandler,
 		ProductHandler: productHandler,

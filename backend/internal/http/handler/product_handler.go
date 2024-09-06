@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rajaabluu/ershop-api/internal/helper"
@@ -25,25 +26,38 @@ func NewProductHandler(logger *logrus.Logger, service *service.ProductService) *
 	}
 }
 
+func (handler *ProductHandler) GetProductCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := handler.ProductService.GetCategories(r.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			helper.WriteJSONResponse(w, &model.Response[any]{Message: "products retrieved", Data: &[]*model.ProductResponse{}}, http.StatusOK)
+			return
+		default:
+			helper.WriteJSONResponse(w, &model.ErrResponse{Message: err.Error()}, http.StatusInternalServerError)
+			return
+		}
+	}
+	helper.WriteJSONResponse(w, &model.Response[[]*model.Category]{Message: "success get all categories", Data: categories}, http.StatusOK)
+}
+
 func (handler *ProductHandler) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(4096); err != nil {
 		helper.WriteJSONResponse(w, &model.ErrResponse{Message: err.Error()}, http.StatusBadRequest)
 		return
 	}
-	qty, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
-	price, _ := strconv.ParseUint(r.FormValue("price"), 10, 32)
 
-	categories := make([]uint, len(r.Form["categories[]"]))
-	for i, val := range r.Form["categories[]"] {
-		id, _ := strconv.ParseUint(val, 10, 32)
-		categories[i] = uint(id)
-	}
+	qty, _ := strconv.ParseUint(strings.TrimSpace(r.FormValue("quantity")), 10, 32)
+	price, _ := strconv.ParseUint(strings.TrimSpace(r.FormValue("price")), 10, 32)
+
+	handler.Logger.Warn(qty, price)
+
 	product := &model.CreateProductRequest{
 		Name:        r.FormValue("name"),
 		Description: r.FormValue("description"),
 		Quantity:    uint(qty),
 		Price:       uint(price),
-		Categories:  categories,
+		Categories:  r.Form["categories[]"],
 		Images:      r.MultipartForm.File["images[]"],
 	}
 	result, err := handler.ProductService.CreateProduct(r.Context(), product)
@@ -59,28 +73,29 @@ func (handler *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Req
 	var err error
 	query := r.URL.Query()["categories[]"]
 	if len(query) > 0 {
-		categories := make([]uint, len(query))
-		for _, value := range query {
-			categoryID, _ := strconv.ParseUint(value, 10, 32)
-			categories = append(categories, uint(categoryID))
-		}
-		products, err = handler.ProductService.GetProductsByCategory(r.Context(), categories)
+		products, err = handler.ProductService.GetProductsByCategory(r.Context(), query)
 	} else {
 		products, err = handler.ProductService.GetAllProducts(r.Context())
 	}
 	if err != nil {
-		helper.WriteJSONResponse(w, &model.ErrResponse{Message: err.Error()}, http.StatusInternalServerError)
-		return
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			helper.WriteJSONResponse(w, &model.Response[any]{Message: "products retrieved", Data: &[]*model.ProductResponse{}}, http.StatusOK)
+			return
+		default:
+			helper.WriteJSONResponse(w, &model.ErrResponse{Message: err.Error()}, http.StatusInternalServerError)
+			return
+		}
 	}
-	helper.WriteJSONResponse(w, &model.Response[[]*model.ProductResponse]{
-		Message: "success getting all products",
-		Data:    products,
+	helper.WriteJSONResponse(w, &model.Response[*[]*model.ProductResponse]{
+		Message: "products retrieved",
+		Data:    &products,
 	}, http.StatusOK)
 }
 
 func (handler *ProductHandler) GetProductDetail(w http.ResponseWriter, r *http.Request) {
-	slug := chi.URLParam(r, "slug")
-	product, err := handler.ProductService.GetProductBySlug(r.Context(), slug)
+	id, _ := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	product, err := handler.ProductService.GetProduct(r.Context(), uint(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
@@ -98,8 +113,8 @@ func (handler *ProductHandler) GetProductDetail(w http.ResponseWriter, r *http.R
 }
 
 func (handler *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	ProductID, _ := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
-	if err := handler.ProductService.DeleteProductByID(r.Context(), uint(ProductID)); err != nil {
+	id, _ := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	if err := handler.ProductService.DeleteProduct(r.Context(), uint(id)); err != nil {
 		helper.WriteJSONResponse(w, &model.ErrResponse{Message: err.Error()}, http.StatusInternalServerError)
 		return
 	}

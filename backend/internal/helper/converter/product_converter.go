@@ -17,7 +17,6 @@ func ToProductResponse(product *entity.Product) *model.ProductResponse {
 	return &model.ProductResponse{
 		ID:          product.ID,
 		Name:        product.Name,
-		Slug:        product.Slug,
 		Description: product.Description,
 		Quantity:    product.Quantity,
 		Price:       product.Price,

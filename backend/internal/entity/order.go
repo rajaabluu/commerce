@@ -8,9 +8,9 @@ import (
 
 type Order struct {
 	gorm.Model
-	OrderID    uint
-	CustomerID uint
-	PaymentID  uint
-	Customer   Customer
-	OrderDate  time.Time
+	OrderID   uint
+	UserID    uint
+	PaymentID uint
+	User      User
+	OrderDate time.Time
 }

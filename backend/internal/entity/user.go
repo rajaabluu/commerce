@@ -2,12 +2,12 @@ package entity
 
 import "gorm.io/gorm"
 
-type Customer struct {
+type User struct {
 	gorm.Model
 	Name     string
 	Email    string `gorm:"unique"`
 	Password string
 	Address  string
-	Role     string `gorm:"default:2"`
+	Role     uint `gorm:"default:2"`
 	Contact  string
 }

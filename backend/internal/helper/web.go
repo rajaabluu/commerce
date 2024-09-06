@@ -29,10 +29,10 @@ func DecodeRequestBody(r *http.Request, toDecode interface{}) error {
 	return json.NewDecoder(r.Body).Decode(toDecode)
 }
 
-func GenerateToken(viper *viper.Viper, user *model.CustomerResponse) (string, error) {
+func GenerateToken(viper *viper.Viper, user *model.UserResponse) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 	return t.SignedString([]byte(viper.GetString("jwt.secret")))
 }

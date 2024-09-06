@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -34,19 +33,39 @@ func NewProductService(database *gorm.DB, validator *validator.Validate, uploade
 	}
 }
 
+func (service *ProductService) GetCategories(ctx context.Context) ([]*model.Category, error) {
+	tx := service.Database.WithContext(ctx)
+	var categories []*entity.Category
+	err := tx.Model(new(entity.Category)).Find(&categories).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*model.Category, len(categories))
+	for i, category := range categories {
+		result[i] = &model.Category{ID: category.ID, Name: category.Name}
+	}
+	return result, nil
+}
+
 func (service *ProductService) CreateProduct(ctx context.Context, request *model.CreateProductRequest) (*model.ProductResponse, error) {
 	tx := service.Database.Model(&entity.Product{}).Preload("Categories").WithContext(ctx).Begin()
 	defer tx.Rollback()
 	product := &entity.Product{
 		Name:        request.Name,
 		Description: request.Description,
-		Slug:        strings.ReplaceAll(request.Name, " ", "-"),
 		Quantity:    request.Quantity,
+		Price:       request.Price,
 	}
 	categories := make([]*entity.Category, len(request.Categories))
-	for i, id := range request.Categories {
-		categories[i] = &entity.Category{ID: id}
+	for i, category := range request.Categories {
+		item := new(entity.Category)
+		if err := service.Database.Where("name = ?", category).First(item).Error; err != nil {
+			service.Logger.Errorf("error on finding categories %+v", err)
+			break
+		}
+		categories[i] = item
 	}
+	product.Categories = categories
 	images := make([]*entity.ProductImage, len(request.Images))
 	for i, val := range request.Images {
 		file, err := val.Open()
@@ -84,15 +103,19 @@ func (service *ProductService) GetAllProducts(ctx context.Context) ([]*model.Pro
 	return responses, nil
 }
 
-func (service *ProductService) GetProductsByCategory(ctx context.Context, IDs []uint) ([]*model.ProductResponse, error) {
-	tx := service.Database.Preload("Images").WithContext(ctx)
+func (service *ProductService) GetProductsByCategory(ctx context.Context, categories []string) ([]*model.ProductResponse, error) {
+	tx := service.Database.Preload("Images").Preload("Categories").WithContext(ctx)
 	var products []*entity.Product
-	categories := make([]*entity.Category, len(IDs))
-	for i, ID := range IDs {
-		categories[i] = &entity.Category{ID: ID}
-	}
-	if err := service.ProductRepository.Find(tx, &entity.Product{Categories: categories}, &products); err != nil {
-		return nil, err
+	for _, category := range categories {
+		item := new(entity.Category)
+		var results []*entity.Product
+		if err := service.Database.Where("name = ?", category).First(item).Error; err != nil {
+			return nil, err
+		}
+		if err := tx.Model(&item).Association("Products").Find(&results); err != nil {
+			return nil, err
+		}
+		products = append(products, results...)
 	}
 	responses := make([]*model.ProductResponse, len(products))
 	for i, product := range products {
@@ -101,25 +124,48 @@ func (service *ProductService) GetProductsByCategory(ctx context.Context, IDs []
 	return responses, nil
 }
 
-func (service *ProductService) GetProductBySlug(ctx context.Context, slug string) (*model.ProductResponse, error) {
-	product := &entity.Product{Slug: slug}
+func (service *ProductService) GetProduct(ctx context.Context, id uint) (*model.ProductResponse, error) {
+	product := new(entity.Product)
 	tx := service.Database.Model(product).Preload("Categories").Preload("Images").WithContext(ctx)
-	if err := service.ProductRepository.FindOne(tx, product); err != nil {
+	if err := service.ProductRepository.FindById(tx, id, product); err != nil {
 		return nil, err
 	}
 	return converter.ToProductResponse(product), nil
 }
 
-func (service *ProductService) DeleteProductByID(ctx context.Context, ID uint) error {
+func (service *ProductService) UpdateProduct(ctx context.Context, id uint, request *model.EditProductRequest) (*model.ProductResponse, error) {
+	product := new(entity.Product)
+	tx := service.Database.WithContext(ctx).Begin()
+	defer tx.Rollback()
+	if err := service.ProductRepository.FindById(tx, id, product); err != nil {
+		return nil, err
+	}
+	product.Name = request.Name
+	product.Name = request.Description
+	product.Price = request.Price
+	categories := make([]*entity.Category, len(request.Categories))
+	for i, category := range request.Categories {
+		item := new(entity.Category)
+		if err := service.Database.Where("name = ?", category).First(item).Error; err != nil {
+			service.Logger.Errorf("error on finding categories %+v", err)
+			break
+		}
+		categories[i] = item
+	}
+	product.Categories = categories
+	return converter.ToProductResponse(product), nil
+}
+
+func (service *ProductService) DeleteProduct(ctx context.Context, id uint) error {
 	product := new(entity.Product)
 	tx := service.Database.Model(product).Preload("Categories").Preload("Images").WithContext(ctx)
-	if err := service.ProductRepository.FindByID(tx, ID, product); err != nil {
+	if err := service.ProductRepository.FindById(tx, id, product); err != nil {
 		return err
 	}
 	for _, image := range product.Images {
 		service.Uploader.Upload.Destroy(context.Background(), uploader.DestroyParams{PublicID: image.PublicID})
 	}
-	if err := service.ProductRepository.DeleteByID(tx, ID); err != nil {
+	if err := service.ProductRepository.Delete(tx, product); err != nil {
 		return err
 	}
 	return nil
