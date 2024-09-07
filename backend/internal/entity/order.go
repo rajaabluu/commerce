@@ -1,16 +1,20 @@
 package entity
 
-import (
-	"time"
-
-	"gorm.io/gorm"
-)
-
 type Order struct {
-	gorm.Model
-	OrderID   uint
+	ID        uint `gorm:"primaryKey"`
 	UserID    uint
 	PaymentID uint
 	User      User
-	OrderDate time.Time
+	Payment   Payment
+}
+
+type OrderDetail struct {
+	ID        uint `gorm:"primaryKey"`
+	OrderID   uint
+	ProductID uint
+	Price     uint
+	Quantity  uint
+	Total     uint
+	Order     Order
+	Product   Product
 }
