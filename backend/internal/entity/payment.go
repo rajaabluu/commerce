@@ -1,10 +1,9 @@
 package entity
 
-import (
-	"github.com/rajaabluu/ershop-api/internal/model"
-)
+import "time"
 
 type Payment struct {
-	ID     uint `gorm:"primaryKey"`
-	Status model.Status
+	ID          uint      `gorm:"primaryKey"`
+	PaymentDate time.Time `gorm:"default:current_timestamp"`
+	Status      string    `gorm:"default:'PENDING'"`
 }

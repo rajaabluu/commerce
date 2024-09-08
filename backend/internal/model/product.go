@@ -39,3 +39,15 @@ type ProductImage struct {
 	Source    string `json:"source,omitempty"`
 	PublicID  string `json:"public_id,omitempty"`
 }
+
+type CreateOrderProductRequest struct {
+	ID       uint `json:"id,omitempty"`
+	Quantity uint `json:"quantity,omitempty"`
+}
+
+type CreatePaymentProductRequest struct {
+	ID       uint
+	Name     string
+	Quantity uint
+	Price    uint
+}

@@ -27,17 +27,23 @@ func Init(config *Config) *chi.Mux {
 
 	customerRepository := repository.NewUserRepository()
 	productRepository := repository.NewProductRepository()
+	orderRepository := repository.NewOrderRepository()
+	paymentRepository := repository.NewPaymentRepository()
 
 	customerService := service.NewUserService(config.Config, config.Database, config.Validator, config.Logger, customerRepository)
 	productService := service.NewProductService(config.Database, config.Validator, config.Uploader, config.Logger, productRepository)
+	paymentService := service.NewPaymentService(config.Logger, NewSnapClient(config.Config), config.Database, paymentRepository)
+	orderService := service.NewOrderService(config.Config, config.Logger, config.Validator, config.Database, productService, paymentService, orderRepository)
 
 	authHandler := handler.NewAuthHandler(config.Logger, customerService)
 	productHandler := handler.NewProductHandler(config.Logger, productService)
+	orderHandler := handler.NewOrderHandler(orderService)
 
 	route := route.Config{
 		Router:         config.Router,
 		AuthHandler:    authHandler,
 		ProductHandler: productHandler,
+		OrderHandler:   orderHandler,
 		Config:         config.Config,
 		Middleware:     middleware.NewMiddleware(customerService),
 	}

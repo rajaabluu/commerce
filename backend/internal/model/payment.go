@@ -1,9 +1,10 @@
 package model
 
-type Status string
+type CreatePaymentResponse struct {
+	RedirectUrl string `json:"redirect_url"`
+}
 
-const (
-	PENDING  Status = "PENDING"
-	SUCCESS  Status = "SUCCESS"
-	REJECTED Status = "REJECTED"
-)
+type CreatePaymentRequest struct {
+	Products []*CreatePaymentProductRequest
+	OrderID  string
+}

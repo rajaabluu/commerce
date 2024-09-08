@@ -16,6 +16,14 @@ func NewDatabase(viper *viper.Viper) *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	database.AutoMigrate(&entity.User{}, &entity.Product{}, &entity.Category{}, &entity.ProductImage{})
+	database.AutoMigrate(
+		&entity.User{},
+		&entity.Product{},
+		&entity.Category{},
+		&entity.ProductImage{},
+		&entity.Payment{},
+		&entity.Order{},
+		&entity.OrderDetail{},
+	)
 	return database
 }
