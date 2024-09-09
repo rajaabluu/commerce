@@ -30,6 +30,14 @@
   font-weight: 500;
 }
 
+/* Medium */
+@font-face {
+  font-family: "Inter";
+  src: url(../fonts/Inter/Inter-SemiBold.ttf) format("truetype");
+  font-style: normal;
+  font-weight: 600;
+}
+
 /* Bold */
 @font-face {
   font-family: "Inter";
