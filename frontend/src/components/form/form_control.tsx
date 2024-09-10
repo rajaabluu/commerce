@@ -10,6 +10,7 @@ export function Input({
   value,
   type,
   error,
+  placeholder,
 }: {
   type: string;
   onChange?: () => void;
@@ -17,6 +18,7 @@ export function Input({
   register?: (field: any) => any;
   value?: string;
   className?: string;
+  placeholder?: string;
   error?: any;
 }) {
   const [hide, setHide] = useState(true);
@@ -26,11 +28,12 @@ export function Input({
         <input
           id={name ?? null}
           type={type}
+          placeholder={placeholder}
           {...(value && { value: value })}
           {...(name && { name: name })}
           {...(onChange && { onChange: onChange })}
           {...(register && name && { ...register(name) })}
-          className={clsx("bg-slate-200 focus:outline-none", className)}
+          className={clsx("bg-slate-200 w-full focus:outline-none", className)}
         />
         {type == "password" && (
           <div
@@ -42,7 +45,7 @@ export function Input({
         )}
       </div>
       {error && error.message && (
-        <small className="text-red-500 mt-0.5">{error.message}</small>
+        <small className="text-red-500 text-left mt-0.5">{error.message}</small>
       )}
     </div>
   );
