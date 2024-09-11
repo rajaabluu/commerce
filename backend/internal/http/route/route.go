@@ -1,6 +1,8 @@
 package route
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rajaabluu/ershop-api/internal/http/handler"
@@ -19,6 +21,19 @@ type Config struct {
 
 func (config *Config) Setup() {
 	config.Router.Use(chiMiddleware.Logger)
+	config.Router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
 	config.Router.Route("/api", func(r chi.Router) {
 		config.SetupAuthHandler(r)
 		config.SetupProductHandler(r)
@@ -28,6 +43,7 @@ func (config *Config) Setup() {
 
 func (config *Config) SetupAuthHandler(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
+		r.Post("/google", config.AuthHandler.UseGoogleAuth)
 		r.Post("/register", config.AuthHandler.Register)
 		r.Post("/login", config.AuthHandler.Login)
 		r.Group(func(r chi.Router) {

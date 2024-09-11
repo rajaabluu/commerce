@@ -18,5 +18,4 @@ type UserResponse struct {
 	Name  string `json:"name,omitempty"`
 	Email string `json:"email,omitempty"`
 	Role  uint   `json:"role,omitempty"`
-	Token string `json:"token,omitempty"`
 }

@@ -6,8 +6,8 @@ type Middleware struct {
 	UserService *service.UserService
 }
 
-func NewMiddleware(customerService *service.UserService) *Middleware {
+func NewMiddleware(userService *service.UserService) *Middleware {
 	return &Middleware{
-		UserService: customerService,
+		UserService: userService,
 	}
 }

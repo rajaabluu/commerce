@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rajaabluu/ershop-api/internal/entity"
@@ -43,24 +47,23 @@ func (service *UserService) Verify(token string) (*model.Auth, error) {
 	return &model.Auth{ID: uint(id)}, nil
 }
 
-func (service *UserService) Register(ctx context.Context, request *model.CreateUserRequest) (*model.UserResponse, error) {
+func (service *UserService) Register(ctx context.Context, request *model.CreateUserRequest) (*model.TokenResponse, error) {
 	tx := service.Database.WithContext(ctx).Begin()
 	defer tx.Rollback()
 	if err := service.Validator.Struct(request); err != nil {
 		return nil, err
 	}
-	customer := &entity.User{
+	user := &entity.User{
 		Name:     request.Name,
 		Email:    request.Email,
 		Password: request.Password,
 		Address:  request.Address,
-		Contact:  request.Contact,
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(customer.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("error on encrypting password: %v", err)
 	}
-	customer.Password = string(hash)
+	user.Password = string(hash)
 	exist := &entity.User{Email: request.Email}
 	service.UserRepository.FindOne(tx, exist)
 	if exist.ID != 0 {
@@ -70,57 +73,101 @@ func (service *UserService) Register(ctx context.Context, request *model.CreateU
 				Message: "email has already taken"},
 			Field: "email"}
 	}
-	if err := service.UserRepository.Create(tx, customer); err != nil {
-		return nil, fmt.Errorf("error on inserting customer: %v", err)
+	if err := service.UserRepository.Create(tx, user); err != nil {
+		return nil, fmt.Errorf("error on inserting user: %v", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, fmt.Errorf("an error occured on transaction %+v", err)
 	}
-	response := converter.ToUserResponse(customer)
+	response := converter.ToUserResponse(user)
 	token, err := helper.GenerateToken(service.Config, response)
 	if err != nil {
 		return nil, err
 	}
-	response.Token = token
-	return response, nil
+	return &model.TokenResponse{AccessToken: token}, nil
 }
 
-func (service *UserService) Login(ctx context.Context, request *model.AuthenticateUserRequest) (*model.UserResponse, error) {
+func (service *UserService) Login(ctx context.Context, request *model.AuthenticateUserRequest) (*model.TokenResponse, error) {
 	tx := service.Database
-	customer := &entity.User{
+	user := &entity.User{
 		Email: request.Email,
 	}
-	if err := service.UserRepository.FindOne(tx, customer); err != nil {
+	if err := service.UserRepository.FindOne(tx, user); err != nil {
 		service.Logger.Warnf("error on service.findone: %+v", err)
 		return nil, model.ErrUnauthorized
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(customer.Password), []byte(request.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
 		service.Logger.Warnf("error on compare password: %+v", err)
 		return nil, model.ErrUnauthorized
 	}
-	response := converter.ToUserResponse(customer)
+	response := converter.ToUserResponse(user)
 	token, err := helper.GenerateToken(service.Config, response)
 	if err != nil {
 		return nil, err
 	}
-	response.Token = token
-	return response, nil
+	return &model.TokenResponse{AccessToken: token}, nil
+}
+
+func (service *UserService) GoogleAuth(ctx context.Context, token string) (*model.TokenResponse, error) {
+	tx := service.Database.WithContext(ctx).Begin()
+	defer tx.Rollback()
+	req, err := http.NewRequest(http.MethodGet, "https://www.googleapis.com/oauth2/v3/userinfo", nil)
+	googleRes := new(model.GoogleAuthResponse)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error on getting user data: %+v", err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error on reading body response from google, %v", err)
+	}
+	err = json.Unmarshal(body, googleRes)
+	if err != nil {
+		return nil, fmt.Errorf("error on unmarshal json: %+v", err)
+	}
+	user := &entity.User{Email: googleRes.Email}
+	err = service.UserRepository.FindOne(tx, user)
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			user.Name = googleRes.Name
+			err := service.UserRepository.Create(tx, user)
+			if err != nil {
+				return nil, fmt.Errorf("error on create user: %+v", err)
+			}
+		default:
+			return nil, err
+		}
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error on commit transaction: %+v", err)
+	}
+	token, err = helper.GenerateToken(service.Config, &model.UserResponse{ID: user.ID})
+	if err != nil {
+		return nil, fmt.Errorf("error on generate token, %+v", err)
+	}
+	return &model.TokenResponse{AccessToken: token}, nil
 }
 
 func (service *UserService) GetCurrentAuth(ctx context.Context) (*model.AuthResponse, error) {
 	tx := service.Database.WithContext(ctx)
 	auth := ctx.Value(model.AuthContextKey).(*model.Auth)
-	customer := new(entity.User)
-	if err := service.UserRepository.FindById(tx, auth.ID, customer); err != nil {
+	user := new(entity.User)
+	if err := service.UserRepository.FindById(tx, auth.ID, user); err != nil {
 		return nil, err
 	}
 	response := &model.AuthResponse{
-		ID:      customer.ID,
-		Name:    customer.Name,
-		Email:   customer.Email,
-		Role:    customer.Role,
-		Address: customer.Address,
-		Contact: customer.Contact,
+		ID:      user.ID,
+		Name:    user.Name,
+		Email:   user.Email,
+		Role:    user.Role,
+		Address: user.Address,
 	}
 	return response, nil
 }

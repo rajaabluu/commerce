@@ -5,11 +5,11 @@ import (
 	"github.com/rajaabluu/ershop-api/internal/model"
 )
 
-func ToUserResponse(customer *entity.User) *model.UserResponse {
+func ToUserResponse(user *entity.User) *model.UserResponse {
 	return &model.UserResponse{
-		ID:    customer.ID,
-		Name:  customer.Name,
-		Email: customer.Email,
-		Role:  customer.Role,
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
 	}
 }

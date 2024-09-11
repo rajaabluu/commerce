@@ -16,3 +16,13 @@ type AuthResponse struct {
 	Contact string `json:"contact,omitempty"`
 	Address string `json:"address,omitempty"`
 }
+
+type TokenResponse struct {
+	AccessToken string `json:"access_token,omitempty"`
+}
+
+type GoogleAuthResponse struct {
+	Sub   string `json:"sub,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+}
