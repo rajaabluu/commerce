@@ -3,11 +3,13 @@ import { ReactNode } from "react";
 
 export default function Button({
   variant = "medium",
+  onClick,
   fullWidth = false,
   children,
   type = "button",
   className = "",
 }: {
+  onClick?: () => void;
   children?: ReactNode;
   variant?: "small" | "medium" | "large";
   fullWidth?: boolean;
@@ -16,6 +18,7 @@ export default function Button({
 }) {
   return (
     <button
+      onClick={onClick}
       type={type}
       className={clsx(
         {

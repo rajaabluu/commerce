@@ -1,5 +1,7 @@
 import { Bars2Icon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import { Popover } from "../popover/popover";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 export const items = [
   {
@@ -20,12 +22,12 @@ export const items = [
         link: "/product?categories[]=gaming",
       },
       {
-        name: "Gaming",
-        link: "/product?categories[]=gaming",
+        name: "Gadget",
+        link: "/product?categories[]=gadget",
       },
       {
-        name: "Gaming",
-        link: "/product?categories[]=gaming",
+        name: "Fashion",
+        link: "/product?categories[]=fashion",
       },
       {
         name: "Gaming",
@@ -49,13 +51,35 @@ export default function TopBar() {
         </h1>
       </div>
       <div className="flex max-md:hidden lg:pl-14 gap-6 text-slate-600 items-center">
-        {items.map(
-          (link, i) =>
-            link.type == "link" && (
-              <Link key={i} to={link?.link as string}>
-                {link.name}
-              </Link>
+        {items.map((link, i) =>
+          link.type == "link" ? (
+            <Link key={i} to={link?.link as string}>
+              {link.name}
+            </Link>
+          ) : (
+            link.type == "submenu" && (
+              <>
+                <Popover
+                  toggleOnHover
+                  position="bottom-right"
+                  title={
+                    <div className="flex gap-1 cursor-default items-center">
+                      {link.name}
+                      <ChevronDownIcon className="size-5" />
+                    </div>
+                  }
+                >
+                  <div className="flex flex-col bg-white border border-slate-300 p-2 *:rounded-md hover:*:bg-slate-50 rounded-md min-w-[10rem]">
+                    {link?.items?.map((item) => (
+                      <Link className="py-1.5 px-2" to={item.link}>
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </Popover>
+              </>
             )
+          )
         )}
       </div>
       <div className="flex gap-4 lg:flex-grow ">

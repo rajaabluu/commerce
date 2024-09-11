@@ -5,20 +5,24 @@ import LoginPage from "./pages/auth/login";
 import RegisterPage from "./pages/auth/register";
 import MainLayout from "./pages/layout";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
+  const queryClient = new QueryClient();
   return (
-    <BrowserRouter>
-      <Routes>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<IndexPage />} />
-          </Route>
-          <Route path="/auth/register" element={<RegisterPage />} />
-          <Route path="/auth/login" element={<LoginPage />} />
-        </GoogleOAuthProvider>
-      </Routes>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<IndexPage />} />
+            </Route>
+            <Route path="/auth/register" element={<RegisterPage />} />
+            <Route path="/auth/login" element={<LoginPage />} />
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 
