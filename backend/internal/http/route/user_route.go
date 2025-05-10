@@ -1,5 +1,5 @@
 package route
 
 func (c *RouteConfig) SetupUserRoute() {
-	c.Route.POST("/register", c.UserHandler.Register)
+	c.Route.POST("/auth/register", c.UserHandler.Register)
 }

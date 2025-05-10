@@ -24,4 +24,5 @@ func main() {
 	app.Init()
 	log.Printf("server started on http://localhost:%d", PORT)
 	c.Logger.Fatal(c.Start(fmt.Sprintf(":%d", PORT)))
+
 }

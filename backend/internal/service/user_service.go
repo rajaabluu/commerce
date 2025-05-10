@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 	"github.com/rajaabluu/commerce/backend/internal/entity"
 	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/repository"
@@ -39,11 +40,19 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 		return nil, err
 	}
 
+	userExist := new(entity.User)
+
+	service.UserRepository.FindByEmail(tx, req.Email, userExist)
+
+	if userExist.Email != "" {
+		return nil, echo.ErrUnprocessableEntity
+	}
+
 	password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		service.Logger.Warnf("failed to hashing password: %+v", err)
-		return nil, err
+		return nil, echo.ErrInternalServerError
 	}
 
 	user := &entity.User{
@@ -66,7 +75,7 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 
 	if err := tx.Commit().Error; err != nil {
 		service.Logger.Warnf("failed to create user: %+v", err)
-		return nil, err
+		return nil, echo.ErrInternalServerError
 	}
 
 	return &model.UserResponse{
