@@ -6,22 +6,22 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/rajaabluu/commerce/backend/internal/app"
 	"github.com/rajaabluu/commerce/backend/internal/config"
 )
 
 func main() {
 	c := echo.New()
-	viper := config.NewViper()
-	PORT := viper.GetInt("app.port")
-	app := &config.App{
+	cfg := config.NewConfig()
+	PORT := cfg.App.Port
+	app.Bootstrap(&app.App{
 		Router:    c,
-		Config:    viper,
+		Config:    cfg,
 		Logger:    config.NewLogger(),
-		Database:  config.NewDatabase(viper),
-		Uploader:  config.NewUploader(viper),
+		Database:  config.NewDatabase(cfg),
+		Uploader:  config.NewUploader(cfg),
 		Validator: validator.New(),
-	}
-	app.Init()
+	})
 	log.Printf("server started on http://localhost:%d", PORT)
 	c.Logger.Fatal(c.Start(fmt.Sprintf(":%d", PORT)))
 

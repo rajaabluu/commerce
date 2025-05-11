@@ -2,6 +2,7 @@ package entity
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"time"
 )
 
@@ -13,10 +14,16 @@ const (
 )
 
 func (p *Role) Scan(value interface{}) error {
-	*p = Role(value.([]byte))
+	switch v := value.(type) {
+	case []byte:
+		*p = Role(string(v))
+	case string:
+		*p = Role(v)
+	default:
+		return fmt.Errorf("unsupported Scan type for Role: %T", value)
+	}
 	return nil
 }
-
 func (p Role) Value() (driver.Value, error) {
 	return string(p), nil
 }

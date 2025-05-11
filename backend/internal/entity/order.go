@@ -15,6 +15,12 @@ const (
 )
 
 func (p *Status) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*p = Status(string(v))
+	case string:
+		*p = Status(v)
+	}
 	*p = Status(value.([]byte))
 	return nil
 }

@@ -26,7 +26,7 @@ func GetValidationMessage(field validator.FieldError) string {
 	case "email":
 		return fmt.Sprintf("%s must be valid email format", strings.ToLower(field.Field()))
 	case "min":
-		return fmt.Sprintf("%s must be atleast %s", strings.ToLower(field.Field()), field.Param())
+		return fmt.Sprintf("%s must be atleast %s characters", strings.ToLower(field.Field()), field.Param())
 	}
 	return field.Error()
 }

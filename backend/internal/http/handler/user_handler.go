@@ -25,7 +25,9 @@ func NewUserHandler(logger *logrus.Logger, service *service.UserService) *UserHa
 }
 
 func (handler *UserHandler) Register(c echo.Context) error {
+
 	userRequest := new(model.CreateUserRequest)
+
 	if err := c.Bind(userRequest); err != nil {
 		handler.Logger.Warnf("error on decoding body request: %+v", err)
 		return err
@@ -36,7 +38,6 @@ func (handler *UserHandler) Register(c echo.Context) error {
 	if err != nil {
 		var ve validator.ValidationErrors
 		switch {
-
 		case errors.As(err, &ve):
 			return c.JSON(http.StatusUnprocessableEntity, &model.ErrorResponse{
 				Message: "validation error",
@@ -52,21 +53,45 @@ func (handler *UserHandler) Register(c echo.Context) error {
 				}},
 			})
 		}
-
 	}
-
-	token, err := helper.GenerateToken(handler.UserService.Config, userResponse)
-
-	if err != nil {
-		handler.Logger.Warnf("error on generating token: %+v", err)
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
 	return c.JSON(http.StatusOK, &model.Response[any]{
 		Message: "user succesfully registered",
-		Data: &model.UserTokenResponse{
-			AccessToken: token,
-		},
+		Data:    userResponse,
 	})
 
+}
+
+func (handler *UserHandler) Login(c echo.Context) error {
+	req := new(model.AuthenticateUserRequest)
+	if err := c.Bind(req); err != nil {
+		handler.Logger.Warnf("error on parsing body: %+v", err)
+		return c.JSON(http.StatusBadRequest, &model.ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+	res, err := handler.UserService.Login(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, &model.ErrorResponse{
+			Message: "incorrect email or password",
+		})
+	}
+	return c.JSON(http.StatusOK, &model.Response[*model.UserResponse]{
+		Message: "login success",
+		Data:    res,
+	})
+}
+
+func (handler *UserHandler) GetAuthenticatedUser(c echo.Context) error {
+	ID := uint(c.Get("userId").(float64))
+	res, err := handler.UserService.GetAuthenticatedUser(c.Request().Context(), ID)
+	if err != nil {
+		handler.Logger.Warnf("failed to get authenticated user: %+v", err)
+		return c.JSON(http.StatusUnauthorized, &model.ErrorResponse{
+			Message: "unauthorized user",
+		})
+	}
+	return c.JSON(http.StatusOK, &model.Response[*model.AuthenticatedUserResponse]{
+		Message: "data sucsefully retrieved",
+		Data:    res,
+	})
 }
