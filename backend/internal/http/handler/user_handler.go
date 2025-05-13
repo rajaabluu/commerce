@@ -90,8 +90,26 @@ func (handler *UserHandler) GetAuthenticatedUser(c echo.Context) error {
 			Message: "unauthorized user",
 		})
 	}
-	return c.JSON(http.StatusOK, &model.Response[*model.AuthenticatedUserResponse]{
+	return c.JSON(http.StatusOK, &model.Response[*model.UserProfileResponse]{
 		Message: "data sucsefully retrieved",
+		Data:    res,
+	})
+}
+
+func (handler *UserHandler) UpdateProfile(c echo.Context) error {
+	req := new(model.UpdateUserProfileRequest)
+	req.ID = uint(c.Get("userId").(float64))
+	if err := c.Bind(req); err != nil {
+		handler.Logger.Warnf("error on parsing body: %+v", err)
+		return c.JSON(http.StatusBadRequest, &model.ErrorResponse{Message: err.Error()})
+	}
+	res, err := handler.UserService.UpdateProfile(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, &model.ErrorResponse{Message: "failed to update user data"})
+	}
+
+	return c.JSON(http.StatusOK, &model.Response[*model.UserProfileResponse]{
+		Message: "success update profile",
 		Data:    res,
 	})
 }

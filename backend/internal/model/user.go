@@ -21,7 +21,16 @@ type UserResponse struct {
 	TokenResponse
 }
 
-type AuthenticatedUserResponse struct {
+type UpdateUserProfileRequest struct {
+	ID      uint    `json:"id,omitempty"`
+	Name    *string `json:"name"`
+	Email   *string `json:"email"`
+	Contact *string `json:"contact"`
+	Address *string `json:"address"`
+	Role    string  `json:"role,omitempty"`
+}
+
+type UserProfileResponse struct {
 	ID      uint    `json:"id,omitempty"`
 	Name    string  `json:"name,omitempty"`
 	Email   string  `json:"email,omitempty"`

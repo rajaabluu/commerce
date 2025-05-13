@@ -103,7 +103,6 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 
 func (service *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequest) (*model.UserResponse, error) {
 	tx := service.DB.WithContext(ctx)
-	defer tx.Rollback()
 
 	user := new(entity.User)
 
@@ -143,14 +142,14 @@ func (service *UserService) Login(ctx context.Context, req *model.AuthenticateUs
 
 }
 
-func (service *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.AuthenticatedUserResponse, error) {
+func (service *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.UserProfileResponse, error) {
 	tx := service.DB.WithContext(ctx)
 	user := new(entity.User)
 	if err := service.UserRepository.FindById(tx, ID, user); err != nil {
 		service.Logger.Warnf("failed to find user by id: %+v", err)
 		return nil, err
 	}
-	res := &model.AuthenticatedUserResponse{
+	res := &model.UserProfileResponse{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
@@ -166,4 +165,48 @@ func (service *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (
 	}
 
 	return res, nil
+}
+
+func (service *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserProfileRequest) (*model.UserProfileResponse, error) {
+	tx := service.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	user := new(entity.User)
+
+	if err := service.UserRepository.FindById(tx, req.ID, user); err != nil {
+		service.Logger.Warnf("failed on updating user profile: %+v", err)
+		return nil, echo.ErrInternalServerError
+	}
+
+	if req.Name != nil {
+		user.Name = *req.Name
+	}
+	if req.Email != nil {
+		user.Email = *req.Email
+	}
+	if req.Address != nil {
+		user.Address = req.Address
+	}
+	if req.Contact != nil {
+		user.Contact = req.Contact
+	}
+
+	if err := service.UserRepository.Update(tx, user); err != nil {
+		service.Logger.Warnf("failed on updating user profile: %+v", err)
+		return nil, echo.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		service.Logger.Warnf("failed on commit transaction: %+v", err)
+		return nil, echo.ErrInternalServerError
+	}
+
+	return &model.UserProfileResponse{
+		ID:      user.ID,
+		Name:    user.Name,
+		Email:   user.Email,
+		Address: user.Address,
+		Contact: user.Contact,
+		Role:    string(user.Role),
+	}, nil
 }

@@ -24,6 +24,6 @@ func (c *RouteConfig) Setup() {
 			"message": "Hello World!",
 		})
 	})
-	r := c.Route.Group("/api")
-	c.SetupUserRoute(r)
+	api := c.Route.Group("/api")
+	c.SetupUserRoute(api)
 }
