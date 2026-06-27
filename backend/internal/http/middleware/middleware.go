@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -37,8 +38,31 @@ func (m *Middleware) VerifyAuth(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
+		fmt.Println("NIH CLAIMS: ", claims)
+
 		c.Set("userId", claims["id"])
 		c.Set("role", claims["role"])
+
+		return next(c)
+	}
+}
+
+func (m *Middleware) VerifyIsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := c.Get("role")
+		if role == nil {
+			return c.JSON(http.StatusForbidden, &model.ErrorResponse{
+				Message: "forbidden",
+				Error:   "role not found",
+			})
+		}
+
+		if role != "admin" {
+			return c.JSON(http.StatusForbidden, &model.ErrorResponse{
+				Message: "forbidden",
+				Error:   "admin access required",
+			})
+		}
 
 		return next(c)
 	}

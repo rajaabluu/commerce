@@ -35,7 +35,7 @@ type User struct {
 	Password  string
 	Contact   *string
 	Address   *string
-	Role      Role `gorm:"type:role;default:'CUSTOMER'"`
+	Role      Role `gorm:"type:varchar(50);default:'CUSTOMER'"`
 	CreatedAt time.Time
 	DeletedAt time.Time
 }

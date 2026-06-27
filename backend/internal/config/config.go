@@ -16,10 +16,10 @@ type Config struct {
 type DatabaseConfig struct {
 	Host     string
 	Port     int
-	DBName   string
+	DBName   string `mapstructure:"db_name"`
 	User     string
 	Password string
-	SSLMode  string
+	SSLMode  string `mapstructure:"ssl_mode"`
 }
 
 type UploaderConfig struct {
@@ -39,7 +39,7 @@ type AppConfig struct {
 
 func NewConfig() *Config {
 	v := viper.New()
-	v.SetConfigName("config")
+	v.SetConfigName(".config")
 	v.SetConfigType("yaml")
 	v.AddConfigPath(".")
 	if err := v.ReadInConfig(); err != nil {

@@ -8,7 +8,6 @@ type Product struct {
 	Description string
 	Price       uint
 	Stock       uint
-	CategoryID  uint
 	Categories  []Category `gorm:"many2many:product_categories;constraint;OnDelete:CASCADE"`
 	CreatedAt   time.Time
 	DeletedAt   time.Time

@@ -33,7 +33,7 @@ type Order struct {
 	gorm.Model
 	UserID uint
 	User   User
-	Status Status `gorm:"default:'PENDING';type:status"`
+	Status Status `gorm:"default:'PENDING';type:varchar(20)"`
 }
 
 type OrderDetail struct {

@@ -11,10 +11,11 @@ import (
 )
 
 type RouteConfig struct {
-	Route       *echo.Echo
-	UserHandler *handler.UserHandler
-	Logger      *logrus.Logger
-	Middleware  *customMiddleware.Middleware
+	Route          *echo.Echo
+	UserHandler    *handler.UserHandler
+	ProductHandler *handler.ProductHandler
+	Logger         *logrus.Logger
+	Middleware     *customMiddleware.Middleware
 }
 
 func (c *RouteConfig) Setup() {
@@ -26,4 +27,5 @@ func (c *RouteConfig) Setup() {
 	})
 	api := c.Route.Group("/api")
 	c.SetupUserRoute(api)
+	c.SetupProductRoute(api)
 }

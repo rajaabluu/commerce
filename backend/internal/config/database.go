@@ -36,5 +36,7 @@ func NewDatabase(config *Config) *gorm.DB {
 		panic(fmt.Errorf("error in connecting to database: %w", err))
 	}
 
+	fmt.Println("connected to :", config.Database.DBName)
+
 	return db
 }

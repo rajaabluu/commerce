@@ -28,11 +28,16 @@ func Bootstrap(c *App) {
 	userService := service.NewUserService(c.Config, c.Validator, c.Logger, c.Database, userRepository)
 	userHandler := handler.NewUserHandler(c.Logger, userService)
 
+	productRepository := repository.NewProductRepository()
+	productService := service.NewProductService(c.Config, c.Validator, c.Logger, c.Database, productRepository)
+	productHandler := handler.NewProductHandler(c.Logger, productService)
+
 	route := &router.RouteConfig{
-		Route:       c.Router,
-		UserHandler: userHandler,
-		Logger:      c.Logger,
-		Middleware:  middleware.NewMiddleware(c.Logger, c.Config),
+		Route:          c.Router,
+		UserHandler:    userHandler,
+		ProductHandler: productHandler,
+		Logger:         c.Logger,
+		Middleware:     middleware.NewMiddleware(c.Logger, c.Config),
 	}
 
 	route.Setup()
