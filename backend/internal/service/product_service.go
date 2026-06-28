@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -32,7 +31,11 @@ func NewProductService(config *config.Config, validator *validator.Validate, log
 	}
 }
 
-func (s *ProductService) Get(ctx context.Context, req *model.GetProductsRequest) ([]*model.ProductResponse, error) {
+func (s *ProductService) GetProducts(ctx context.Context, req *model.GetProductsRequest) ([]*model.ProductResponse, error) {
+	tx := s.DB.WithContext(ctx).Begin()
+
+	defer tx.Rollback()
+
 	filter := &model.ProductFilter{
 		Categories: req.Categories,
 		SortBy:     req.SortBy,
@@ -53,7 +56,35 @@ func (s *ProductService) Get(ctx context.Context, req *model.GetProductsRequest)
 		filter.MaxPrice = req.MaxPrice
 	}
 
-	return nil, errors.New("not implemented yet")
+	res := make([]*model.ProductResponse, 0)
+
+	products, err := s.ProductRepository.Find(tx, filter)
+
+	if err != nil {
+		s.Logger.Errorf("error on getting products: %+v", err.Error())
+	}
+
+	if len(products) > 0 {
+		for _, product := range products {
+			var categories []*model.Category
+			for _, category := range product.Categories {
+				categories = append(categories, &model.Category{
+					ID:   category.ID,
+					Name: category.Name,
+				})
+			}
+			res = append(res, &model.ProductResponse{
+				Name:        product.Name,
+				Description: product.Description,
+				Price:       product.Price,
+				Stock:       product.Stock,
+				Categories:  categories,
+			})
+		}
+	}
+
+	return res, nil
+
 }
 
 func (s *ProductService) Create(ctx context.Context, req *model.CreateProductRequest) (*model.ProductResponse, error) {
@@ -83,7 +114,9 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 		Categories:  categories,
 	}
 
-	if err := s.ProductRepository.Create(tx, product); err != nil {
+	err := s.ProductRepository.Create(tx, product)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -92,12 +125,21 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 		return nil, echo.ErrInternalServerError
 	}
 
+	var pCategories []*model.Category
+
+	for _, category := range product.Categories {
+		pCategories = append(pCategories, &model.Category{
+			ID:   category.ID,
+			Name: category.Name,
+		})
+	}
+
 	res := &model.ProductResponse{
 		Name:        product.Name,
 		Description: product.Description,
 		Stock:       product.Stock,
 		Price:       product.Price,
-		Categories:  &product.Categories,
+		Categories:  pCategories,
 	}
 
 	return res, nil

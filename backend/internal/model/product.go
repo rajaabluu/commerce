@@ -1,7 +1,5 @@
 package model
 
-import "github.com/rajaabluu/commerce/backend/internal/entity"
-
 type CreateProductRequest struct {
 	Name        string `json:"name,omitempty" validate:"required"`
 	Description string `json:"description,omitempty" validate:"required"`
@@ -11,11 +9,16 @@ type CreateProductRequest struct {
 }
 
 type ProductResponse struct {
-	Name        string             `json:"name,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Price       uint               `json:"price,omitempty"`
-	Stock       uint               `json:"stock,omitempty"`
-	Categories  *[]entity.Category `json:"categories,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Price       uint        `json:"price,omitempty"`
+	Stock       uint        `json:"stock,omitempty"`
+	Categories  []*Category `json:"categories,omitempty"`
+}
+
+type Category struct {
+	ID   uint   `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 type GetProductsRequest struct {
@@ -32,7 +35,6 @@ type GetProductsRequest struct {
 }
 
 type ProductFilter struct {
-	Page   int
 	Limit  int
 	Offset int
 

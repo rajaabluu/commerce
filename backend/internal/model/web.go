@@ -9,7 +9,7 @@ type AuthClaims struct {
 
 type Response[T any] struct {
 	Message string `json:"message,omitempty"`
-	Data    T      `json:"data,omitempty"`
+	Data    T      `json:"data"`
 }
 
 type ErrorResponse struct {

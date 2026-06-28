@@ -5,5 +5,7 @@ import (
 )
 
 func (c *RouteConfig) SetupProductRoute(g *echo.Group) {
-	g.POST("/products", c.ProductHandler.CreateNewProduct, c.Middleware.VerifyAuth, c.Middleware.VerifyIsAdmin)
+	product := g.Group("/products")
+	product.GET("", c.ProductHandler.GetAll, c.Middleware.VerifyAuth)
+	product.POST("", c.ProductHandler.CreateNewProduct, c.Middleware.VerifyAuth, c.Middleware.VerifyIsAdmin)
 }

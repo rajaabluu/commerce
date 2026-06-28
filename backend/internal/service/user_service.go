@@ -43,11 +43,9 @@ func (s *UserService) Create(ctx context.Context, req *model.CreateUserRequest) 
 		return nil, err
 	}
 
-	userExist := new(entity.User)
+	existingUser, err := s.UserRepository.FindByEmail(tx, req.Email)
 
-	s.UserRepository.FindByEmail(tx, req.Email, userExist)
-
-	if userExist.Email != "" {
+	if existingUser.Email != "" {
 		return nil, echo.ErrUnprocessableEntity
 	}
 
@@ -72,7 +70,9 @@ func (s *UserService) Create(ctx context.Context, req *model.CreateUserRequest) 
 		user.Address = &req.Address
 	}
 
-	if err := s.UserRepository.Create(tx, user); err != nil {
+	err = s.UserRepository.Create(tx, user)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -104,9 +104,7 @@ func (s *UserService) Create(ctx context.Context, req *model.CreateUserRequest) 
 func (s *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequest) (*model.UserResponse, error) {
 	tx := s.DB.WithContext(ctx)
 
-	user := new(entity.User)
-
-	err := s.UserRepository.FindByEmail(tx, req.Email, user)
+	user, err := s.UserRepository.FindByEmail(tx, req.Email)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -144,8 +142,8 @@ func (s *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequ
 
 func (s *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.UserProfileResponse, error) {
 	tx := s.DB.WithContext(ctx)
-	user := new(entity.User)
-	if err := s.UserRepository.FindById(tx, ID, user); err != nil {
+	user, err := s.UserRepository.FindById(tx, ID)
+	if err != nil {
 		s.Logger.Warnf("failed to find user by id: %+v", err)
 		return nil, err
 	}
@@ -171,9 +169,8 @@ func (s *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserPr
 	tx := s.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	user := new(entity.User)
-
-	if err := s.UserRepository.FindById(tx, req.ID, user); err != nil {
+	user, err := s.UserRepository.FindById(tx, req.ID)
+	if err != nil {
 		s.Logger.Warnf("failed on updating user profile: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
@@ -191,7 +188,9 @@ func (s *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserPr
 		user.Contact = req.Contact
 	}
 
-	if err := s.UserRepository.Update(tx, user); err != nil {
+	err = s.UserRepository.Update(tx, user)
+
+	if err != nil {
 		s.Logger.Warnf("failed on updating user profile: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
