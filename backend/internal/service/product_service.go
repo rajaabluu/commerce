@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -31,12 +32,36 @@ func NewProductService(config *config.Config, validator *validator.Validate, log
 	}
 }
 
-func (service *ProductService) Create(ctx context.Context, req *model.CreateProductRequest) (*model.ProductResponse, error) {
-	tx := service.DB.WithContext(ctx).Begin()
+func (s *ProductService) Get(ctx context.Context, req *model.GetProductsRequest) ([]*model.ProductResponse, error) {
+	filter := &model.ProductFilter{
+		Categories: req.Categories,
+		SortBy:     req.SortBy,
+		SortOrder:  req.SortOrder,
+		Limit:      req.Limit,
+		Offset:     (req.Page - 1) * req.Limit,
+	}
+
+	if req.Search != "" {
+		filter.Search = req.Search
+	}
+
+	if req.MinPrice > 0 {
+		filter.MinPrice = req.MinPrice
+	}
+
+	if req.MaxPrice > 0 {
+		filter.MaxPrice = req.MaxPrice
+	}
+
+	return nil, errors.New("not implemented yet")
+}
+
+func (s *ProductService) Create(ctx context.Context, req *model.CreateProductRequest) (*model.ProductResponse, error) {
+	tx := s.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
 
-	if err := service.Validator.Struct(req); err != nil {
+	if err := s.Validator.Struct(req); err != nil {
 		return nil, err
 	}
 
@@ -58,12 +83,12 @@ func (service *ProductService) Create(ctx context.Context, req *model.CreateProd
 		Categories:  categories,
 	}
 
-	if err := service.ProductRepository.Create(tx, product); err != nil {
+	if err := s.ProductRepository.Create(tx, product); err != nil {
 		return nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		service.Logger.Warnf("failed to create user: %+v", err)
+		s.Logger.Warnf("failed to create user: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 

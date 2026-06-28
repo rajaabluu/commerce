@@ -34,18 +34,18 @@ func NewUserService(config *config.Config, validator *validator.Validate, logger
 	}
 }
 
-func (service *UserService) Create(ctx context.Context, req *model.CreateUserRequest) (*model.UserResponse, error) {
-	tx := service.DB.WithContext(ctx).Begin()
+func (s *UserService) Create(ctx context.Context, req *model.CreateUserRequest) (*model.UserResponse, error) {
+	tx := s.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
 
-	if err := service.Validator.Struct(req); err != nil {
+	if err := s.Validator.Struct(req); err != nil {
 		return nil, err
 	}
 
 	userExist := new(entity.User)
 
-	service.UserRepository.FindByEmail(tx, req.Email, userExist)
+	s.UserRepository.FindByEmail(tx, req.Email, userExist)
 
 	if userExist.Email != "" {
 		return nil, echo.ErrUnprocessableEntity
@@ -54,7 +54,7 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 	password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		service.Logger.Warnf("failed to hashing password: %+v", err)
+		s.Logger.Warnf("failed to hashing password: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
@@ -72,12 +72,12 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 		user.Address = &req.Address
 	}
 
-	if err := service.UserRepository.Create(tx, user); err != nil {
+	if err := s.UserRepository.Create(tx, user); err != nil {
 		return nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		service.Logger.Warnf("failed to create user: %+v", err)
+		s.Logger.Warnf("failed to create user: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
@@ -88,10 +88,10 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 		Role:  string(user.Role),
 	}
 
-	token, err := helper.GenerateToken(service.Config, res)
+	token, err := helper.GenerateToken(s.Config, res)
 
 	if err != nil {
-		service.Logger.Warnf("failed on generating token: %+v", err)
+		s.Logger.Warnf("failed on generating token: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
@@ -101,19 +101,19 @@ func (service *UserService) Create(ctx context.Context, req *model.CreateUserReq
 
 }
 
-func (service *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequest) (*model.UserResponse, error) {
-	tx := service.DB.WithContext(ctx)
+func (s *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequest) (*model.UserResponse, error) {
+	tx := s.DB.WithContext(ctx)
 
 	user := new(entity.User)
 
-	err := service.UserRepository.FindByEmail(tx, req.Email, user)
+	err := s.UserRepository.FindByEmail(tx, req.Email, user)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			service.Logger.Warnf("user not found")
+			s.Logger.Warnf("user not found")
 			return nil, echo.ErrUnauthorized
 		} else {
-			service.Logger.Warn(err.Error())
+			s.Logger.Warn(err.Error())
 			return nil, err
 		}
 	}
@@ -129,10 +129,10 @@ func (service *UserService) Login(ctx context.Context, req *model.AuthenticateUs
 		Name:  user.Name,
 	}
 
-	token, err := helper.GenerateToken(service.Config, res)
+	token, err := helper.GenerateToken(s.Config, res)
 
 	if err != nil {
-		service.Logger.Warnf("error on generating token: %+v", err)
+		s.Logger.Warnf("error on generating token: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
@@ -142,11 +142,11 @@ func (service *UserService) Login(ctx context.Context, req *model.AuthenticateUs
 
 }
 
-func (service *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.UserProfileResponse, error) {
-	tx := service.DB.WithContext(ctx)
+func (s *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.UserProfileResponse, error) {
+	tx := s.DB.WithContext(ctx)
 	user := new(entity.User)
-	if err := service.UserRepository.FindById(tx, ID, user); err != nil {
-		service.Logger.Warnf("failed to find user by id: %+v", err)
+	if err := s.UserRepository.FindById(tx, ID, user); err != nil {
+		s.Logger.Warnf("failed to find user by id: %+v", err)
 		return nil, err
 	}
 	res := &model.UserProfileResponse{
@@ -167,14 +167,14 @@ func (service *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (
 	return res, nil
 }
 
-func (service *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserProfileRequest) (*model.UserProfileResponse, error) {
-	tx := service.DB.WithContext(ctx).Begin()
+func (s *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserProfileRequest) (*model.UserProfileResponse, error) {
+	tx := s.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	user := new(entity.User)
 
-	if err := service.UserRepository.FindById(tx, req.ID, user); err != nil {
-		service.Logger.Warnf("failed on updating user profile: %+v", err)
+	if err := s.UserRepository.FindById(tx, req.ID, user); err != nil {
+		s.Logger.Warnf("failed on updating user profile: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
@@ -191,13 +191,13 @@ func (service *UserService) UpdateProfile(ctx context.Context, req *model.Update
 		user.Contact = req.Contact
 	}
 
-	if err := service.UserRepository.Update(tx, user); err != nil {
-		service.Logger.Warnf("failed on updating user profile: %+v", err)
+	if err := s.UserRepository.Update(tx, user); err != nil {
+		s.Logger.Warnf("failed on updating user profile: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		service.Logger.Warnf("failed on commit transaction: %+v", err)
+		s.Logger.Warnf("failed on commit transaction: %+v", err)
 		return nil, echo.ErrInternalServerError
 	}
 

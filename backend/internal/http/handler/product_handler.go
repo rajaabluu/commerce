@@ -24,15 +24,19 @@ func NewProductHandler(logger *logrus.Logger, productService *service.ProductSer
 	}
 }
 
-func (handler *ProductHandler) CreateNewProduct(c echo.Context) error {
-	productRequest := new(model.CreateProductRequest)
+func (handler *ProductHandler) GetProduct(c echo.Context) error {
+	return errors.New("not implemented yet")
+}
 
-	if err := c.Bind(productRequest); err != nil {
+func (handler *ProductHandler) CreateNewProduct(c echo.Context) error {
+	req := new(model.CreateProductRequest)
+
+	if err := c.Bind(req); err != nil {
 		handler.Logger.Warnf("error on decoding request: %+v", err)
 		return err
 	}
 
-	res, err := handler.ProductService.Create(c.Request().Context(), productRequest)
+	res, err := handler.ProductService.Create(c.Request().Context(), req)
 
 	if err != nil {
 		var ve validator.ValidationErrors
@@ -53,4 +57,12 @@ func (handler *ProductHandler) CreateNewProduct(c echo.Context) error {
 		Message: "product successfully created",
 		Data:    res,
 	})
+}
+
+func (handler *ProductHandler) GetProductById(c echo.Context) error {
+	return errors.New("not implemented yet")
+}
+
+func (handler *ProductHandler) DeleteProduct(c echo.Context) error {
+	return errors.New("not implemented yet")
 }

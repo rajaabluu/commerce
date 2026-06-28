@@ -17,3 +17,31 @@ type ProductResponse struct {
 	Stock       uint               `json:"stock,omitempty"`
 	Categories  *[]entity.Category `json:"categories,omitempty"`
 }
+
+type GetProductsRequest struct {
+	Page       int
+	Limit      int
+	Search     string
+	Categories []string
+
+	MinPrice float64
+	MaxPrice float64
+
+	SortBy    string
+	SortOrder string
+}
+
+type ProductFilter struct {
+	Page   int
+	Limit  int
+	Offset int
+
+	Search     string
+	Categories []string
+
+	MinPrice float64
+	MaxPrice float64
+
+	SortBy    string
+	SortOrder string
+}
