@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type RouteConfig struct {
+type RouterConfig struct {
 	Route          *echo.Echo
 	UserHandler    *handler.UserHandler
 	ProductHandler *handler.ProductHandler
@@ -18,14 +18,20 @@ type RouteConfig struct {
 	Middleware     *customMiddleware.Middleware
 }
 
-func (c *RouteConfig) Setup() {
+func (c *RouterConfig) Setup() {
 	c.Route.Use(middleware.Logger())
 	c.Route.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{
 			"message": "Hello World!",
 		})
 	})
+
 	api := c.Route.Group("/api")
-	c.SetupUserRoute(api)
-	c.SetupProductRoute(api)
+	auth := api.Group("/auth")
+	users := api.Group("/users", c.Middleware.VerifyAuth)
+	products := api.Group("/products", c.Middleware.VerifyAuth)
+
+	c.registerAuthRouter(auth)
+	c.registerUserRouter(users)
+	c.registerProductRouter(products)
 }

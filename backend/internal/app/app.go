@@ -1,15 +1,14 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/rajaabluu/commerce/backend/internal/config"
-	"github.com/rajaabluu/commerce/backend/internal/http/handler"
 	"github.com/rajaabluu/commerce/backend/internal/http/middleware"
 	"github.com/rajaabluu/commerce/backend/internal/http/router"
-	"github.com/rajaabluu/commerce/backend/internal/repository"
-	"github.com/rajaabluu/commerce/backend/internal/service"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -23,22 +22,41 @@ type App struct {
 	Uploader  *cloudinary.Cloudinary
 }
 
-func Bootstrap(c *App) {
-	userRepository := repository.NewUserRepository()
-	userService := service.NewUserService(c.Config, c.Validator, c.Logger, c.Database, userRepository)
-	userHandler := handler.NewUserHandler(c.Logger, userService)
+func NewApp() *App {
+	r := echo.New()
+	cfg := config.NewConfig()
+	logger := config.NewLogger()
+	logger.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+		ForceColors:   true,
+	})
 
-	productRepository := repository.NewProductRepository()
-	productService := service.NewProductService(c.Config, c.Validator, c.Logger, c.Database, productRepository)
-	productHandler := handler.NewProductHandler(c.Logger, productService)
-
-	route := &router.RouteConfig{
-		Route:          c.Router,
-		UserHandler:    userHandler,
-		ProductHandler: productHandler,
-		Logger:         c.Logger,
-		Middleware:     middleware.NewMiddleware(c.Logger, c.Config),
+	app := &App{
+		Router:    r,
+		Config:    cfg,
+		Logger:    logger,
+		Database:  config.NewDatabase(cfg),
+		Uploader:  config.NewUploader(cfg),
+		Validator: validator.New(),
 	}
 
-	route.Setup()
+	userHandler := registerUserHandler(app)
+	productHandler := registerProductHandler(app)
+
+	routeCfg := &router.RouterConfig{
+		Route:          app.Router,
+		UserHandler:    userHandler,
+		ProductHandler: productHandler,
+		Logger:         app.Logger,
+		Middleware:     middleware.NewMiddleware(app.Logger, app.Config),
+	}
+
+	routeCfg.Setup()
+
+	return app
+}
+
+func (a *App) Start(port int) error {
+	a.Logger.Printf("server started on http://localhost:%d", a.Config.App.Port)
+	return a.Router.Start(fmt.Sprintf(":%d", port))
 }

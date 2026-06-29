@@ -4,8 +4,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (c *RouteConfig) SetupProductRoute(g *echo.Group) {
-	product := g.Group("/products")
-	product.GET("", c.ProductHandler.GetAll, c.Middleware.VerifyAuth)
-	product.POST("", c.ProductHandler.CreateNewProduct, c.Middleware.VerifyAuth, c.Middleware.VerifyIsAdmin)
+func (c *RouterConfig) registerProductRouter(r *echo.Group) {
+	r.GET("", c.ProductHandler.GetAll)
+	r.POST("", c.ProductHandler.CreateNewProduct, c.Middleware.VerifyIsAdmin)
+	r.GET("/:id", c.ProductHandler.GetProductById)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/service"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
@@ -97,7 +98,30 @@ func (h *ProductHandler) CreateNewProduct(c echo.Context) error {
 }
 
 func (h *ProductHandler) GetProductById(c echo.Context) error {
-	return errors.New("not implemented yet")
+	var id uint
+	if param := c.Param("id"); param != "" {
+		i, err := strconv.Atoi(param)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid product id")
+		}
+		id = uint(i)
+	}
+
+	res, err := h.ProductService.FindByID(c.Request().Context(), id)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return c.JSON(http.StatusNotFound, &model.ErrorResponse{
+				Message: "product not found",
+			})
+		}
+	}
+
+	return c.JSON(http.StatusOK, &model.Response[*model.ProductResponse]{
+		Message: "product data retrieved",
+		Data:    res,
+	})
 }
 
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {

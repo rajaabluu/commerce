@@ -144,3 +144,31 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 
 	return res, nil
 }
+
+func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductResponse, error) {
+	db := s.DB.Preload("Categories")
+	product, err := s.ProductRepository.FindById(db, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var categories []*model.Category
+
+	for _, category := range product.Categories {
+		categories = append(categories, &model.Category{
+			ID:   category.ID,
+			Name: category.Name,
+		})
+	}
+
+	res := &model.ProductResponse{
+		Name:        product.Name,
+		Description: product.Description,
+		Stock:       product.Stock,
+		Price:       product.Price,
+		Categories:  categories,
+	}
+
+	return res, nil
+}
