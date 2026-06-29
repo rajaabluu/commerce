@@ -42,16 +42,18 @@ func NewApp() *App {
 
 	userHandler := registerUserHandler(app)
 	productHandler := registerProductHandler(app)
+	productImageHandler := registerProductImageHandler(app)
 
 	routeCfg := &router.RouterConfig{
-		Route:          app.Router,
-		UserHandler:    userHandler,
-		ProductHandler: productHandler,
-		Logger:         app.Logger,
-		Middleware:     middleware.NewMiddleware(app.Logger, app.Config),
+		Route:               app.Router,
+		UserHandler:         userHandler,
+		ProductHandler:      productHandler,
+		ProductImageHandler: productImageHandler,
+		Logger:              app.Logger,
+		Middleware:          middleware.NewMiddleware(app.Logger, app.Config),
 	}
 
-	routeCfg.Setup()
+	routeCfg.Register()
 
 	return app
 }

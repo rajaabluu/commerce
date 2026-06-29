@@ -15,14 +15,14 @@ import (
 )
 
 type ProductHandler struct {
-	ProductService *service.ProductService
 	Logger         *logrus.Logger
+	ProductService *service.ProductService
 }
 
 func NewProductHandler(logger *logrus.Logger, productService *service.ProductService) *ProductHandler {
 	return &ProductHandler{
-		ProductService: productService,
 		Logger:         logger,
+		ProductService: productService,
 	}
 }
 

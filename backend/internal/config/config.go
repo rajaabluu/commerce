@@ -23,9 +23,9 @@ type DatabaseConfig struct {
 }
 
 type UploaderConfig struct {
-	CloudName string
-	APISecret string
-	APIKey    string
+	CloudName string `mapstructure:"cloud_name"`
+	APISecret string `mapstructure:"api_secret"`
+	APIKey    string `mapstructure:"api_key"`
 }
 
 type JWTConfig struct {
@@ -53,5 +53,4 @@ func NewConfig() *Config {
 	}
 
 	return config
-
 }

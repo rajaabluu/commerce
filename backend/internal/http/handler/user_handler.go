@@ -13,14 +13,14 @@ import (
 )
 
 type UserHandler struct {
-	UserService *service.UserService
 	Logger      *logrus.Logger
+	UserService *service.UserService
 }
 
 func NewUserHandler(logger *logrus.Logger, service *service.UserService) *UserHandler {
 	return &UserHandler{
-		UserService: service,
 		Logger:      logger,
+		UserService: service,
 	}
 }
 

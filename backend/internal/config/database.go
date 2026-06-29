@@ -28,6 +28,7 @@ func NewDatabase(config *Config) *gorm.DB {
 		&entity.Order{},
 		&entity.Payment{},
 		&entity.OrderDetail{},
+		&entity.ProductImage{},
 	); err != nil {
 		panic(fmt.Errorf("failed migrating database: %w", err))
 	}

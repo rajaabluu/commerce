@@ -17,20 +17,28 @@ import (
 )
 
 type UserService struct {
-	Config         *config.Config
-	DB             *gorm.DB
+	Config *config.Config
+	Logger *logrus.Logger
+
+	DB        *gorm.DB
+	Validator *validator.Validate
+
 	UserRepository *repository.UserRepository
-	Validator      *validator.Validate
-	Logger         *logrus.Logger
 }
 
-func NewUserService(config *config.Config, validator *validator.Validate, logger *logrus.Logger, DB *gorm.DB, repository *repository.UserRepository) *UserService {
+func NewUserService(
+	config *config.Config,
+	logger *logrus.Logger,
+	DB *gorm.DB,
+	validator *validator.Validate,
+	repository *repository.UserRepository) *UserService {
+
 	return &UserService{
 		Config:         config,
-		DB:             DB,
-		UserRepository: repository,
-		Validator:      validator,
 		Logger:         logger,
+		DB:             DB,
+		Validator:      validator,
+		UserRepository: repository,
 	}
 }
 

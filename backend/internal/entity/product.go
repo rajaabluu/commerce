@@ -11,11 +11,5 @@ type Product struct {
 	Categories  []Category `gorm:"many2many:product_categories;constraint;OnDelete:CASCADE"`
 	CreatedAt   time.Time
 	DeletedAt   time.Time
-}
-
-type ProductImage struct {
-	ID        uint `gorm:"primaryKey"`
-	ProductID uint
-	Source    string
-	PublicID  string
+	Images      []ProductImage
 }

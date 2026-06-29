@@ -63,7 +63,7 @@ func (r *ProductRepository) Find(db *gorm.DB, filter *model.ProductFilter) ([]*e
 		db = db.Limit(filter.Limit).Offset(filter.Offset)
 	}
 
-	err := db.Preload("Categories").Find(&products).Error
+	err := db.Preload("Categories").Preload("Images").Find(&products).Error
 
 	return products, err
 }

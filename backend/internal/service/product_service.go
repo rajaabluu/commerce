@@ -14,20 +14,28 @@ import (
 )
 
 type ProductService struct {
-	DB                *gorm.DB
-	Config            *config.Config
-	Logger            *logrus.Logger
-	Validator         *validator.Validate
+	Config *config.Config
+	Logger *logrus.Logger
+
+	DB        *gorm.DB
+	Validator *validator.Validate
+
 	ProductRepository *repository.ProductRepository
 }
 
-func NewProductService(config *config.Config, validator *validator.Validate, logger *logrus.Logger, DB *gorm.DB, repository *repository.ProductRepository) *ProductService {
+func NewProductService(
+	config *config.Config,
+	logger *logrus.Logger,
+	DB *gorm.DB,
+	validator *validator.Validate,
+	productRepository *repository.ProductRepository) *ProductService {
+
 	return &ProductService{
 		Config:            config,
+		Logger:            logger,
 		DB:                DB,
 		Validator:         validator,
-		Logger:            logger,
-		ProductRepository: repository,
+		ProductRepository: productRepository,
 	}
 }
 
@@ -73,12 +81,24 @@ func (s *ProductService) GetProducts(ctx context.Context, req *model.GetProducts
 					Name: category.Name,
 				})
 			}
+
+			images := make([]*model.ProductImageResponse, 0)
+
+			for _, img := range product.Images {
+				images = append(images, &model.ProductImageResponse{
+					ID:     img.ID,
+					Source: img.Source,
+				})
+			}
+
 			res = append(res, &model.ProductResponse{
+				ID:          product.ID,
 				Name:        product.Name,
 				Description: product.Description,
 				Price:       product.Price,
 				Stock:       product.Stock,
 				Categories:  categories,
+				Images:      images,
 			})
 		}
 	}
@@ -135,6 +155,7 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 	}
 
 	res := &model.ProductResponse{
+		ID:          product.ID,
 		Name:        product.Name,
 		Description: product.Description,
 		Stock:       product.Stock,
@@ -146,7 +167,7 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 }
 
 func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductResponse, error) {
-	db := s.DB.Preload("Categories")
+	db := s.DB.Preload("Categories").Preload("Images")
 	product, err := s.ProductRepository.FindById(db, id)
 
 	if err != nil {
@@ -162,12 +183,22 @@ func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductR
 		})
 	}
 
+	var images []*model.ProductImageResponse
+
+	for _, img := range product.Images {
+		images = append(images, &model.ProductImageResponse{
+			ID:     img.ID,
+			Source: img.Source,
+		})
+	}
+
 	res := &model.ProductResponse{
 		Name:        product.Name,
 		Description: product.Description,
 		Stock:       product.Stock,
 		Price:       product.Price,
 		Categories:  categories,
+		Images:      images,
 	}
 
 	return res, nil

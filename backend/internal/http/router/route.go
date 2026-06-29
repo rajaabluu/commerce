@@ -11,14 +11,16 @@ import (
 )
 
 type RouterConfig struct {
-	Route          *echo.Echo
-	UserHandler    *handler.UserHandler
-	ProductHandler *handler.ProductHandler
-	Logger         *logrus.Logger
-	Middleware     *customMiddleware.Middleware
+	Route      *echo.Echo
+	Logger     *logrus.Logger
+	Middleware *customMiddleware.Middleware
+
+	UserHandler         *handler.UserHandler
+	ProductHandler      *handler.ProductHandler
+	ProductImageHandler *handler.ProductImageHandler
 }
 
-func (c *RouterConfig) Setup() {
+func (c *RouterConfig) Register() {
 	c.Route.Use(middleware.Logger())
 	c.Route.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{

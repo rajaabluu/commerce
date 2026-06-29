@@ -8,4 +8,5 @@ func (c *RouterConfig) registerProductRouter(r *echo.Group) {
 	r.GET("", c.ProductHandler.GetAll)
 	r.POST("", c.ProductHandler.CreateNewProduct, c.Middleware.VerifyIsAdmin)
 	r.GET("/:id", c.ProductHandler.GetProductById)
+	r.POST("/:id/images", c.ProductImageHandler.Upload, c.Middleware.VerifyIsAdmin)
 }

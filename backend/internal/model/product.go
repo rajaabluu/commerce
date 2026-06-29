@@ -9,11 +9,13 @@ type CreateProductRequest struct {
 }
 
 type ProductResponse struct {
-	Name        string      `json:"name,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Price       uint        `json:"price,omitempty"`
-	Stock       uint        `json:"stock,omitempty"`
-	Categories  []*Category `json:"categories,omitempty"`
+	ID          uint            `json:"id,omitempty"`
+	Name        string          `json:"name,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Price       uint            `json:"price,omitempty"`
+	Stock       uint            `json:"stock,omitempty"`
+	Categories  []*Category     `json:"categories,omitempty"`
+	Images      []*ProductImage `json:"images"`
 }
 
 type Category struct {
