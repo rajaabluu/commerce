@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -51,7 +52,7 @@ func (h *ProductHandler) GetAll(c echo.Context) error {
 	req.SortOrder = c.QueryParam("order")
 	req.Categories = c.QueryParams()["category"]
 
-	res, err := h.ProductService.GetProducts(c.Request().Context(), req)
+	res, err := h.ProductService.Find(c.Request().Context(), req)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, model.ErrorResponse{
@@ -122,6 +123,46 @@ func (h *ProductHandler) GetProductById(c echo.Context) error {
 		Message: "product data retrieved",
 		Data:    res,
 	})
+}
+
+func (h *ProductHandler) UpdateProduct(c echo.Context) error {
+	var id uint
+	if param := c.Param("id"); param != "" {
+		i, err := strconv.Atoi(param)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid product id")
+		}
+		id = uint(i)
+	}
+
+	req := new(model.UpdateProductRequest)
+
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusInternalServerError, &model.ErrorResponse{
+			Message: "error on decoding body request",
+			Error:   err.Error(),
+		})
+	}
+
+	res, err := h.ProductService.Update(c.Request().Context(), req, id)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return c.JSON(http.StatusNotFound, &model.ErrorResponse{
+				Message: "product not found",
+			})
+		// case errors.Is(err, gorm.err)
+		default:
+			h.Logger.Warnf("unexpected error: %+v", reflect.TypeOf(err))
+		}
+	}
+
+	return c.JSON(http.StatusOK, &model.Response[*model.ProductResponse]{
+		Message: "product updated successfully",
+		Data:    res,
+	})
+
 }
 
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {

@@ -38,6 +38,7 @@ type UserProfileResponse struct {
 	Address *string `json:"address"`
 	Role    string  `json:"role,omitempty"`
 }
+
 type TokenResponse struct {
 	AccessToken string `json:"access_token,omitempty"`
 }

@@ -39,7 +39,7 @@ func NewProductService(
 	}
 }
 
-func (s *ProductService) GetProducts(ctx context.Context, req *model.GetProductsRequest) ([]*model.ProductResponse, error) {
+func (s *ProductService) Find(ctx context.Context, req *model.GetProductsRequest) ([]*model.ProductResponse, error) {
 	tx := s.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
@@ -167,7 +167,7 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 }
 
 func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductResponse, error) {
-	db := s.DB.Preload("Categories").Preload("Images")
+	db := s.DB.WithContext(ctx).Preload("Categories").Preload("Images")
 	product, err := s.ProductRepository.FindById(db, id)
 
 	if err != nil {
@@ -202,4 +202,79 @@ func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductR
 	}
 
 	return res, nil
+}
+
+func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductRequest, ID uint) (*model.ProductResponse, error) {
+	tx := s.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	updates := map[string]any{}
+
+	if req.Name != "" {
+		updates["name"] = req.Name
+	}
+
+	if req.Description != "" {
+		updates["description"] = req.Description
+	}
+
+	if req.Price > 0 {
+		updates["price"] = req.Price
+	}
+
+	if req.Stock > 0 {
+		updates["stock"] = req.Stock
+	}
+
+	if len(req.CategoryIds) > 0 {
+		categories := make([]entity.Category, 0, len(req.CategoryIds))
+		for _, id := range req.CategoryIds {
+			categories = append(categories, entity.Category{
+				ID: uint(id),
+			})
+		}
+
+		product := entity.Product{ID: ID}
+
+		if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
+			s.Logger.Warnf("error on updating categories association: %+v", err)
+			return nil, err
+		}
+	}
+
+	product, err := s.ProductRepository.Update(tx, ID, updates)
+	if err != nil {
+		s.Logger.Warnf("error on updating product: %+v", err)
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		s.Logger.Warnf("error on commit transaction: %+v", err)
+		return nil, err
+	}
+
+	var categoriesResponse []*model.Category
+	for _, c := range product.Categories {
+		categoriesResponse = append(categoriesResponse, &model.Category{
+			ID:   c.ID,
+			Name: c.Name,
+		})
+	}
+	var imagesResponse []*model.ProductImageResponse
+	for _, img := range product.Images {
+		imagesResponse = append(imagesResponse, &model.ProductImageResponse{
+			ID:     img.ID,
+			Source: img.Source,
+		})
+	}
+
+	return &model.ProductResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		Categories:  categoriesResponse,
+		Images:      imagesResponse,
+	}, nil
 }

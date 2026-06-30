@@ -88,7 +88,7 @@ func (s *ProductImageService) UploadProductImage(ctx context.Context, files []*m
 		productImages = append(productImages, productImage)
 	}
 
-	tx := s.DB.Begin().WithContext(ctx)
+	tx := s.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
 	if err := s.ProductImageRepository.BulkCreate(tx, productImages); err != nil {

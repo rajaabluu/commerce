@@ -68,6 +68,22 @@ func (r *ProductRepository) Find(db *gorm.DB, filter *model.ProductFilter) ([]*e
 	return products, err
 }
 
-func (r *ProductRepository) AddProductImage(db *gorm.DB, img *entity.ProductImage) error {
-	return db.Create(img).Error
+func (r *ProductRepository) Update(db *gorm.DB, id uint, updates map[string]interface{}) (*entity.Product, error) {
+	if len(updates) > 0 {
+		if err := db.Model(&entity.Product{}).
+			Where("id = ?", id).
+			Updates(updates).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	product := new(entity.Product)
+
+	if err := db.Preload("Categories").
+		Preload("Images").
+		First(product, id).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
