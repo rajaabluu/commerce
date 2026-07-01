@@ -278,3 +278,27 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 		Images:      imagesResponse,
 	}, nil
 }
+
+func (s *ProductService) Delete(ctx context.Context, productID uint) error {
+	tx := s.DB.WithContext(ctx).Begin()
+
+	product, err := s.ProductRepository.FindById(tx, productID)
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	if err := s.ProductRepository.Delete(tx, product); err != nil {
+		s.Logger.Warnf("error on deleting item: %+v", err)
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		s.Logger.Warnf("error on commit transaction: %+v", err)
+		return err
+	}
+
+	return nil
+}

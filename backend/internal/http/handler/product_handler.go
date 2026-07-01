@@ -166,5 +166,30 @@ func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 }
 
 func (h *ProductHandler) DeleteProduct(c echo.Context) error {
-	return errors.New("not implemented yet")
+	var id uint
+	if param := c.Param("id"); param != "" {
+		i, err := strconv.Atoi(param)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid product id")
+		}
+		id = uint(i)
+	}
+
+	if err := h.ProductService.Delete(c.Request().Context(), id); err != nil {
+		switch err {
+		case gorm.ErrRecordNotFound:
+			return c.JSON(http.StatusNotFound, &model.ErrorResponse{
+				Message: "invalid request",
+				Error:   "product not found",
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, &model.ErrorResponse{
+			Message: "error deleting product",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "product successfully deleted",
+	})
+
 }

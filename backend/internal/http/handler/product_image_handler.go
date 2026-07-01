@@ -25,7 +25,7 @@ func NewProductImageHandler(logger *logrus.Logger, productImgService *service.Pr
 	}
 }
 
-func (h *ProductImageHandler) Upload(c echo.Context) error {
+func (h *ProductImageHandler) UploadProductImage(c echo.Context) error {
 	var productID uint
 	form, err := c.MultipartForm()
 	var files []*multipart.FileHeader

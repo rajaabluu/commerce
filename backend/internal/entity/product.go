@@ -8,8 +8,8 @@ type Product struct {
 	Description string
 	Price       uint
 	Stock       uint
-	Categories  []Category `gorm:"many2many:product_categories;constraint;OnDelete:CASCADE"`
+	Categories  []Category `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
 	CreatedAt   time.Time
 	DeletedAt   time.Time
-	Images      []ProductImage
+	Images      []ProductImage `gorm:"constraint:OnDelete:CASCADE"`
 }
