@@ -1,37 +1,39 @@
 package entity
 
 import (
-	"database/sql/driver"
-
 	"gorm.io/gorm"
 )
 
-type Status string
+type OrderStatus string
 
 const (
-	PENDING  Status = "PENDING"
-	REJECTED Status = "REJECTED"
-	APPROVED Status = "APPROVED"
+	OrderPending   OrderStatus = "PENDING"
+	OrderPaid      OrderStatus = "PAID"
+	OrderShipped   OrderStatus = "SHIPPED"
+	OrderCompleted OrderStatus = "COMPLETED"
+	OrderCancelled OrderStatus = "CANCELLED"
 )
-
-func (p *Status) Scan(value interface{}) error {
-	switch v := value.(type) {
-	case []byte:
-		*p = Status(string(v))
-	case string:
-		*p = Status(v)
-	}
-	*p = Status(value.([]byte))
-	return nil
-}
-
-func (p Status) Value() (driver.Value, error) {
-	return string(p), nil
-}
 
 type Order struct {
 	gorm.Model
-	UserID uint
+
+	UserID uint `gorm:"not null"`
 	User   User
-	Status Status `gorm:"default:'PENDING';type:varchar(20)"`
+
+	Status OrderStatus `gorm:"type:varchar(20);default:'PENDING'"`
+
+	PaymentMethod string `gorm:"size:30;not null"`
+
+	TotalPrice int64 `gorm:"not null"`
+
+	RecipientName string `gorm:"not null"`
+	Phone         string `gorm:"not null"`
+
+	Province      string `gorm:"not null"`
+	City          string `gorm:"not null"`
+	District      string `gorm:"not null"`
+	PostalCode    string `gorm:"not null"`
+	StreetAddress string `gorm:"type:text;not null"`
+
+	OrderItems []OrderItem
 }

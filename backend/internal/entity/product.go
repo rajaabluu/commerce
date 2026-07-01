@@ -1,15 +1,15 @@
 package entity
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 type Product struct {
-	ID          uint `gorm:"primaryKey"`
-	Name        string
-	Description string
-	Price       uint
-	Stock       uint
-	Categories  []Category `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
-	CreatedAt   time.Time
-	DeletedAt   time.Time
+	gorm.Model
+	Name        string         `gorm:"not null"`
+	Description string         `gorm:"not null"`
+	Price       uint           `gorm:"not null"`
+	Stock       uint           `gorm:"not null"`
+	Categories  []Category     `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
 	Images      []ProductImage `gorm:"constraint:OnDelete:CASCADE"`
 }

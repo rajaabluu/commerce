@@ -3,7 +3,8 @@ package entity
 import (
 	"database/sql/driver"
 	"fmt"
-	"time"
+
+	"gorm.io/gorm"
 )
 
 type Role string
@@ -29,13 +30,11 @@ func (p Role) Value() (driver.Value, error) {
 }
 
 type User struct {
-	ID        uint `gorm:"primaryKey"`
-	Name      string
-	Email     string
-	Password  string
+	gorm.Model
+	Name      string `gorm:"not null"`
+	Email     string `gorm:"not null"`
+	Password  string `gorm:"not null"`
 	Phone     *string
 	Addresses []Address
 	Role      Role `gorm:"type:varchar(50);default:'CUSTOMER'"`
-	CreatedAt time.Time
-	DeletedAt time.Time
 }

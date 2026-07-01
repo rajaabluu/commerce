@@ -27,7 +27,7 @@ func NewDatabase(config *Config) *gorm.DB {
 		&entity.Category{},
 		&entity.Order{},
 		&entity.Payment{},
-		&entity.OrderDetail{},
+		&entity.OrderItem{},
 		&entity.ProductImage{},
 		&entity.Address{},
 	); err != nil {

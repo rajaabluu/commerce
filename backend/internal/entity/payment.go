@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -17,12 +15,13 @@ const (
 
 type Payment struct {
 	gorm.Model
-	ID            uint
-	OrderID       uint
-	Order         Order
-	Status        PaymentStatus
-	Method        string
+
+	OrderID uint `gorm:"uniqueIndex"`
+	Order   Order
+
+	Status PaymentStatus `gorm:"type:varchar(20);default:'PENDING'"`
+
+	Method string `gorm:"size:30"`
+
 	TransactionID string
-	CreatedAt     time.Time
-	DeletedAt     time.Time
 }
