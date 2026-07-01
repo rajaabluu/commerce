@@ -70,12 +70,8 @@ func (s *UserService) Create(ctx context.Context, req *model.CreateUserRequest) 
 		Password: string(password),
 	}
 
-	if req.Contact != "" {
-		user.Contact = &req.Contact
-	}
-
-	if req.Address != "" {
-		user.Address = &req.Address
+	if req.Phone != "" {
+		user.Phone = &req.Phone
 	}
 
 	err = s.UserRepository.Create(tx, user)
@@ -151,10 +147,12 @@ func (s *UserService) Login(ctx context.Context, req *model.AuthenticateUserRequ
 func (s *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model.UserProfileResponse, error) {
 	tx := s.DB.WithContext(ctx)
 	user, err := s.UserRepository.FindById(tx, ID)
+
 	if err != nil {
 		s.Logger.Warnf("failed to find user by id: %+v", err)
 		return nil, err
 	}
+
 	res := &model.UserProfileResponse{
 		ID:    user.ID,
 		Name:  user.Name,
@@ -162,12 +160,8 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, ID uint) (*model
 		Role:  string(user.Role),
 	}
 
-	if user.Contact != nil {
-		res.Contact = user.Contact
-	}
-
-	if user.Address != nil {
-		res.Address = user.Address
+	if user.Phone != nil {
+		res.Phone = user.Phone
 	}
 
 	return res, nil
@@ -189,11 +183,9 @@ func (s *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserPr
 	if req.Email != nil {
 		user.Email = *req.Email
 	}
-	if req.Address != nil {
-		user.Address = req.Address
-	}
-	if req.Contact != nil {
-		user.Contact = req.Contact
+
+	if req.Phone != nil {
+		user.Phone = req.Phone
 	}
 
 	err = s.UserRepository.Update(tx, user)
@@ -209,11 +201,10 @@ func (s *UserService) UpdateProfile(ctx context.Context, req *model.UpdateUserPr
 	}
 
 	return &model.UserProfileResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Address: user.Address,
-		Contact: user.Contact,
-		Role:    string(user.Role),
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Phone: user.Phone,
+		Role:  string(user.Role),
 	}, nil
 }

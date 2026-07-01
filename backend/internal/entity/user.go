@@ -33,8 +33,8 @@ type User struct {
 	Name      string
 	Email     string
 	Password  string
-	Contact   *string
-	Address   *string
+	Phone     *string
+	Addresses []Address
 	Role      Role `gorm:"type:varchar(50);default:'CUSTOMER'"`
 	CreatedAt time.Time
 	DeletedAt time.Time

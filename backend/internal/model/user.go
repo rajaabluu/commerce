@@ -4,7 +4,7 @@ type CreateUserRequest struct {
 	Name     string `json:"name,omitempty" validate:"required"`
 	Email    string `json:"email,omitempty" validate:"required,email"`
 	Password string `json:"password,omitempty" validate:"required,min=6"`
-	Contact  string `json:"contact,omitempty"`
+	Phone    string `json:"contact,omitempty"`
 	Address  string `json:"address,omitempty"`
 }
 
@@ -25,7 +25,7 @@ type UpdateUserProfileRequest struct {
 	ID      uint    `json:"id,omitempty"`
 	Name    *string `json:"name"`
 	Email   *string `json:"email"`
-	Contact *string `json:"contact"`
+	Phone   *string `json:"contact"`
 	Address *string `json:"address"`
 	Role    string  `json:"role,omitempty"`
 }
@@ -34,7 +34,7 @@ type UserProfileResponse struct {
 	ID      uint    `json:"id,omitempty"`
 	Name    string  `json:"name,omitempty"`
 	Email   string  `json:"email,omitempty"`
-	Contact *string `json:"contact"`
+	Phone   *string `json:"contact"`
 	Address *string `json:"address"`
 	Role    string  `json:"role,omitempty"`
 }
