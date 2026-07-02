@@ -82,10 +82,10 @@ func (s *ProductService) Find(ctx context.Context, req *model.GetProductsRequest
 				})
 			}
 
-			images := make([]*model.ProductImageResponse, 0)
+			images := make([]*model.ProductImage, 0)
 
 			for _, img := range product.Images {
-				images = append(images, &model.ProductImageResponse{
+				images = append(images, &model.ProductImage{
 					ID:     img.ID,
 					Source: img.Source,
 				})
@@ -183,10 +183,10 @@ func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductR
 		})
 	}
 
-	var images []*model.ProductImageResponse
+	var images []*model.ProductImage
 
 	for _, img := range product.Images {
-		images = append(images, &model.ProductImageResponse{
+		images = append(images, &model.ProductImage{
 			ID:     img.ID,
 			Source: img.Source,
 		})
@@ -208,41 +208,45 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 	tx := s.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	updates := map[string]any{}
+	product := new(entity.Product)
+	product.ID = ID
 
-	if req.Name != "" {
-		updates["name"] = req.Name
+	s.Logger.Warnf("KONTOLLLLnama : %+v", req.Name)
+
+	if req.Name != nil {
+		product.Name = *req.Name
 	}
 
-	if req.Description != "" {
-		updates["description"] = req.Description
+	if req.Description != nil {
+		product.Description = *req.Description
 	}
 
-	if req.Price > 0 {
-		updates["price"] = req.Price
+	if req.Price != nil {
+		product.Price = *req.Price
 	}
 
-	if req.Stock > 0 {
-		updates["stock"] = req.Stock
+	if req.Stock != nil {
+		product.Stock = *req.Stock
 	}
 
-	if len(req.CategoryIds) > 0 {
-		categories := make([]entity.Category, 0, len(req.CategoryIds))
-		for _, id := range req.CategoryIds {
+	if req.CategoryIds != nil && len(*req.CategoryIds) > 0 {
+		categories := make([]entity.Category, 0, len(*req.CategoryIds))
+		for _, id := range *req.CategoryIds {
 			categories = append(categories, entity.Category{
 				ID: uint(id),
 			})
 		}
 
-		product := entity.Product{ID: ID}
+		product := new(entity.Product)
+		product.ID = ID
 
-		if err := tx.Model(&product).Association("Categories").Replace(categories); err != nil {
+		if err := tx.Model(product).Association("Categories").Replace(categories); err != nil {
 			s.Logger.Warnf("error on updating categories association: %+v", err)
 			return nil, err
 		}
 	}
 
-	product, err := s.ProductRepository.Update(tx, ID, updates)
+	err := s.ProductRepository.Update(tx, product)
 	if err != nil {
 		s.Logger.Warnf("error on updating product: %+v", err)
 		return nil, err
@@ -260,9 +264,9 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 			Name: c.Name,
 		})
 	}
-	var imagesResponse []*model.ProductImageResponse
+	var imagesResponse []*model.ProductImage
 	for _, img := range product.Images {
-		imagesResponse = append(imagesResponse, &model.ProductImageResponse{
+		imagesResponse = append(imagesResponse, &model.ProductImage{
 			ID:     img.ID,
 			Source: img.Source,
 		})

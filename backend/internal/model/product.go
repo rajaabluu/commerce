@@ -51,9 +51,9 @@ type ProductFilter struct {
 }
 
 type UpdateProductRequest struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Price       uint   `json:"price,omitempty"`
-	Stock       uint   `json:"stock"`
-	CategoryIds []int  `json:"category_ids,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Price       *uint   `json:"price,omitempty"`
+	Stock       *uint   `json:"stock"`
+	CategoryIds *[]int  `json:"category_ids,omitempty"`
 }

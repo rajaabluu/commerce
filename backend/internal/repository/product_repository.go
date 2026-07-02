@@ -68,22 +68,31 @@ func (r *ProductRepository) Find(db *gorm.DB, filter *model.ProductFilter) ([]*e
 	return products, err
 }
 
-func (r *ProductRepository) Update(db *gorm.DB, id uint, updates map[string]interface{}) (*entity.Product, error) {
-	if len(updates) > 0 {
-		if err := db.Model(&entity.Product{}).
-			Where("id = ?", id).
-			Updates(updates).Error; err != nil {
-			return nil, err
-		}
+func (r *ProductRepository) Update(db *gorm.DB, product *entity.Product) error {
+	if err := db.
+		Model(&entity.Product{}).
+		Where("id = ?", product.ID).
+		Updates(product).Error; err != nil {
+		return err
 	}
 
-	product := new(entity.Product)
-
-	if err := db.Preload("Categories").
+	return db.
 		Preload("Images").
-		First(product, id).Error; err != nil {
+		Preload("Categories").
+		First(product, product.ID).Error
+}
+
+func (r *ProductRepository) FindByIDs(
+	db *gorm.DB,
+	ids []uint,
+) ([]*entity.Product, error) {
+	var products []*entity.Product
+
+	if err := db.
+		Where("id IN ?", ids).
+		Find(&products).Error; err != nil {
 		return nil, err
 	}
 
-	return product, nil
+	return products, nil
 }

@@ -71,7 +71,7 @@ func (h *ProductImageHandler) UploadProductImage(c echo.Context) error {
 
 	}
 
-	return c.JSON(http.StatusOK, &model.Response[[]*model.ProductImageResponse]{
+	return c.JSON(http.StatusOK, &model.Response[[]*model.ProductImage]{
 		Message: "product images uploaded sucessfully",
 		Data:    res,
 	})
