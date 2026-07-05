@@ -17,6 +17,7 @@ type UserResponse struct {
 	ID    uint   `json:"id,omitempty"`
 	Name  string `json:"name,omitempty"`
 	Email string `json:"email,omitempty"`
+	Phone string `json:"phone,omitempty"`
 	Role  string `json:"role,omitempty"`
 	TokenResponse
 }
@@ -25,15 +26,6 @@ type UpdateUserProfileRequest struct {
 	ID      uint    `json:"id,omitempty"`
 	Name    *string `json:"name"`
 	Email   *string `json:"email"`
-	Phone   *string `json:"contact"`
-	Address *string `json:"address"`
-	Role    string  `json:"role,omitempty"`
-}
-
-type UserProfileResponse struct {
-	ID      uint    `json:"id,omitempty"`
-	Name    string  `json:"name,omitempty"`
-	Email   string  `json:"email,omitempty"`
 	Phone   *string `json:"contact"`
 	Address *string `json:"address"`
 	Role    string  `json:"role,omitempty"`

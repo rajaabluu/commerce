@@ -90,7 +90,7 @@ func (h *UserHandler) GetAuthenticatedUser(c echo.Context) error {
 			Message: "unauthorized user",
 		})
 	}
-	return c.JSON(http.StatusOK, &model.Response[*model.UserProfileResponse]{
+	return c.JSON(http.StatusOK, &model.Response[*model.UserResponse]{
 		Message: "data sucsefully retrieved",
 		Data:    res,
 	})
@@ -108,7 +108,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, &model.ErrorResponse{Message: "failed to update user data"})
 	}
 
-	return c.JSON(http.StatusOK, &model.Response[*model.UserProfileResponse]{
+	return c.JSON(http.StatusOK, &model.Response[*model.UserResponse]{
 		Message: "success update profile",
 		Data:    res,
 	})

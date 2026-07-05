@@ -116,5 +116,4 @@ func (s *ProductImageService) UploadProductImage(ctx context.Context, files []*m
 	}
 
 	return res, nil
-
 }

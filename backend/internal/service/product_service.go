@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/rajaabluu/commerce/backend/internal/config"
 	"github.com/rajaabluu/commerce/backend/internal/entity"
+	"github.com/rajaabluu/commerce/backend/internal/helper/mapper"
 	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/repository"
 	"github.com/sirupsen/logrus"
@@ -74,32 +75,7 @@ func (s *ProductService) Find(ctx context.Context, req *model.GetProductsRequest
 
 	if len(products) > 0 {
 		for _, product := range products {
-			var categories []*model.Category
-			for _, category := range product.Categories {
-				categories = append(categories, &model.Category{
-					ID:   category.ID,
-					Name: category.Name,
-				})
-			}
-
-			images := make([]*model.ProductImage, 0)
-
-			for _, img := range product.Images {
-				images = append(images, &model.ProductImage{
-					ID:     img.ID,
-					Source: img.Source,
-				})
-			}
-
-			res = append(res, &model.ProductResponse{
-				ID:          product.ID,
-				Name:        product.Name,
-				Description: product.Description,
-				Price:       product.Price,
-				Stock:       product.Stock,
-				Categories:  categories,
-				Images:      images,
-			})
+			res = append(res, mapper.ToProductResponse(product))
 		}
 	}
 
@@ -145,23 +121,7 @@ func (s *ProductService) Create(ctx context.Context, req *model.CreateProductReq
 		return nil, echo.ErrInternalServerError
 	}
 
-	var pCategories []*model.Category
-
-	for _, category := range product.Categories {
-		pCategories = append(pCategories, &model.Category{
-			ID:   category.ID,
-			Name: category.Name,
-		})
-	}
-
-	res := &model.ProductResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Stock:       product.Stock,
-		Price:       product.Price,
-		Categories:  pCategories,
-	}
+	res := mapper.ToProductResponse(product)
 
 	return res, nil
 }
@@ -174,34 +134,10 @@ func (s *ProductService) FindByID(ctx context.Context, id uint) (*model.ProductR
 		return nil, err
 	}
 
-	var categories []*model.Category
-
-	for _, category := range product.Categories {
-		categories = append(categories, &model.Category{
-			ID:   category.ID,
-			Name: category.Name,
-		})
-	}
-
-	var images []*model.ProductImage
-
-	for _, img := range product.Images {
-		images = append(images, &model.ProductImage{
-			ID:     img.ID,
-			Source: img.Source,
-		})
-	}
-
-	res := &model.ProductResponse{
-		Name:        product.Name,
-		Description: product.Description,
-		Stock:       product.Stock,
-		Price:       product.Price,
-		Categories:  categories,
-		Images:      images,
-	}
+	res := mapper.ToProductResponse(product)
 
 	return res, nil
+
 }
 
 func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductRequest, ID uint) (*model.ProductResponse, error) {
@@ -210,8 +146,6 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 
 	product := new(entity.Product)
 	product.ID = ID
-
-	s.Logger.Warnf("KONTOLLLLnama : %+v", req.Name)
 
 	if req.Name != nil {
 		product.Name = *req.Name
@@ -257,30 +191,9 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 		return nil, err
 	}
 
-	var categoriesResponse []*model.Category
-	for _, c := range product.Categories {
-		categoriesResponse = append(categoriesResponse, &model.Category{
-			ID:   c.ID,
-			Name: c.Name,
-		})
-	}
-	var imagesResponse []*model.ProductImage
-	for _, img := range product.Images {
-		imagesResponse = append(imagesResponse, &model.ProductImage{
-			ID:     img.ID,
-			Source: img.Source,
-		})
-	}
+	res := mapper.ToProductResponse(product)
 
-	return &model.ProductResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Price:       product.Price,
-		Stock:       product.Stock,
-		Categories:  categoriesResponse,
-		Images:      imagesResponse,
-	}, nil
+	return res, nil
 }
 
 func (s *ProductService) Delete(ctx context.Context, productID uint) error {
