@@ -16,13 +16,12 @@ const (
 
 type Order struct {
 	gorm.Model
+	InvoiceID string `gorm:"unique"`
 
 	UserID uint `gorm:"not null"`
 	User   User
 
 	Status OrderStatus `gorm:"type:varchar(20);default:'PENDING'"`
-
-	PaymentMethod string `gorm:"size:30;not null"`
 
 	TotalPrice int64 `gorm:"not null"`
 
@@ -35,5 +34,6 @@ type Order struct {
 	PostalCode    string `gorm:"not null"`
 	StreetAddress string `gorm:"type:text;not null"`
 
+	Payment    Payment
 	OrderItems []OrderItem
 }

@@ -25,8 +25,6 @@ type OrderResponse struct {
 
 	Status string `json:"status"`
 
-	PaymentMethod string `json:"payment_method"`
-
 	TotalPrice int64 `json:"total_price"`
 
 	RecipientName string `json:"recipient_name"`
@@ -39,6 +37,5 @@ type OrderResponse struct {
 	StreetAddress string `json:"street_address"`
 
 	OrderItems []*OrderItemResponse `json:"items"`
+	Payment    Payment              `json:"payment"`
 }
-
-type CreateOrderResponse = OrderResponse

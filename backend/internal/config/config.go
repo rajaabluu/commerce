@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	Database DatabaseConfig
-	Uploader UploaderConfig
-	JWT      JWTConfig
-	App      AppConfig
+	Database   DatabaseConfig
+	Uploader   UploaderConfig
+	JWT        JWTConfig
+	App        AppConfig
+	PaymentLib PaymentLibConfig `mapstructure:"payment_lib"`
 }
 
 type DatabaseConfig struct {
@@ -26,6 +27,10 @@ type UploaderConfig struct {
 	CloudName string `mapstructure:"cloud_name"`
 	APISecret string `mapstructure:"api_secret"`
 	APIKey    string `mapstructure:"api_key"`
+}
+
+type PaymentLibConfig struct {
+	ServerKey string `mapstructure:"server_key"`
 }
 
 type JWTConfig struct {

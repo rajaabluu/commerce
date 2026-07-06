@@ -3,8 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/snap"
 	"github.com/rajaabluu/commerce/backend/internal/config"
 	"github.com/rajaabluu/commerce/backend/internal/entity"
 	"github.com/rajaabluu/commerce/backend/internal/model"
@@ -17,10 +21,13 @@ type OrderService struct {
 	Config *config.Config
 	Logger *logrus.Logger
 
-	DB        *gorm.DB
-	Validator *validator.Validate
+	DB         *gorm.DB
+	Validator  *validator.Validate
+	PaymentLib snap.Client
 
 	ProductRepository *repository.ProductRepository
+	PaymentRepository *repository.PaymentRepository
+	UserRepository    *repository.UserRepository
 	AddressRepository *repository.AddressRepository
 	OrderRepository   *repository.OrderRepository
 }
@@ -31,17 +38,25 @@ func NewOrderService(
 
 	DB *gorm.DB,
 	validator *validator.Validate,
+	paymentLib snap.Client,
 
 	productRepository *repository.ProductRepository,
+	paymentRepository *repository.PaymentRepository,
+	userRepository *repository.UserRepository,
 	addressRepository *repository.AddressRepository,
 	orderRepository *repository.OrderRepository,
 ) *OrderService {
 	return &OrderService{
-		Config:            config,
-		Logger:            logger,
-		DB:                DB,
-		Validator:         validator,
+		Config: config,
+		Logger: logger,
+
+		DB:         DB,
+		Validator:  validator,
+		PaymentLib: paymentLib,
+
 		ProductRepository: productRepository,
+		PaymentRepository: paymentRepository,
+		UserRepository:    userRepository,
 		AddressRepository: addressRepository,
 		OrderRepository:   orderRepository,
 	}
@@ -51,12 +66,18 @@ func (s *OrderService) Create(
 	ctx context.Context,
 	userID uint,
 	req *model.CreateOrderRequest,
-) (*model.CreateOrderResponse, error) {
+) (*model.OrderResponse, error) {
 
 	tx := s.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	if err := s.Validator.Struct(req); err != nil {
+		return nil, err
+	}
+
+	user, err := s.UserRepository.FindById(tx, userID)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -113,11 +134,16 @@ func (s *OrderService) Create(
 		product.Stock -= uint(item.Quantity)
 	}
 
+	invoiceID := fmt.Sprintf(
+		"INV-%s-%06d",
+		time.Now().Format("20060102"),
+		rand.Intn(1000000),
+	)
+
 	order := &entity.Order{
 		UserID:        userID,
+		InvoiceID:     invoiceID,
 		Status:        entity.OrderPending,
-		PaymentMethod: "MIDTRANS",
-
 		RecipientName: address.RecipientName,
 		Phone:         address.Phone,
 		Province:      address.Province,
@@ -140,6 +166,49 @@ func (s *OrderService) Create(
 		}
 	}
 
+	itemDetails := make([]midtrans.ItemDetails, 0, len(order.OrderItems))
+
+	for _, item := range order.OrderItems {
+		itemDetails = append(itemDetails, midtrans.ItemDetails{
+			ID:    string(item.ID),
+			Name:  item.ProductName,
+			Price: item.Price,
+			Qty:   int32(item.Quantity),
+		})
+	}
+
+	snapRes, err := s.PaymentLib.CreateTransaction(&snap.Request{
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  string(order.ID),
+			GrossAmt: order.TotalPrice,
+		},
+		CreditCard: &snap.CreditCardDetails{
+			Secure: true,
+		},
+		CustomerDetail: &midtrans.CustomerDetails{
+			FName: user.Name,
+			Phone: address.Phone,
+			ShipAddr: &midtrans.CustomerAddress{
+				FName:    address.RecipientName,
+				Phone:    address.Phone,
+				City:     address.City,
+				Postcode: address.PostalCode,
+				Address:  address.StreetAddress,
+			},
+		},
+		Items: &itemDetails,
+	})
+
+	payment := &entity.Payment{
+		OrderID:     order.ID,
+		Token:       snapRes.Token,
+		RedirectURL: snapRes.RedirectURL,
+	}
+
+	if err := s.PaymentRepository.Create(tx, payment); err != nil {
+		return nil, err
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
@@ -156,10 +225,9 @@ func (s *OrderService) Create(
 		})
 	}
 
-	return &model.CreateOrderResponse{
+	return &model.OrderResponse{
 		ID:            order.ID,
 		Status:        string(order.Status),
-		PaymentMethod: order.PaymentMethod,
 		TotalPrice:    order.TotalPrice,
 		RecipientName: order.RecipientName,
 		Phone:         order.Phone,

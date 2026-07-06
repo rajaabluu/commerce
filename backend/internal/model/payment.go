@@ -1,8 +1,4 @@
-package entity
-
-import (
-	"gorm.io/gorm"
-)
+package model
 
 type PaymentStatus string
 
@@ -16,15 +12,13 @@ const (
 )
 
 type Payment struct {
-	gorm.Model
+	OrderID uint `json:"order_id,omitempty"`
 
-	OrderID uint `gorm:"uniqueIndex"`
+	Method string `json:"method,omitempty"`
 
-	Method string `gorm:"size:30"`
+	Token       string `json:"token,omitempty"`
+	RedirectURL string `json:"redirect_url,omitempty"`
 
-	Token       string
-	RedirectURL string
-
-	TransactionID string
-	Status        PaymentStatus `gorm:"type:varchar(20);default:'PENDING'"`
+	TransactionID string        `json:"transaction_id,omitempty"`
+	Status        PaymentStatus `json:"status,omitempty"`
 }

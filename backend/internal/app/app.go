@@ -6,6 +6,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/midtrans/midtrans-go/snap"
 	"github.com/rajaabluu/commerce/backend/internal/config"
 	"github.com/rajaabluu/commerce/backend/internal/http/middleware"
 	"github.com/rajaabluu/commerce/backend/internal/http/router"
@@ -14,12 +15,13 @@ import (
 )
 
 type App struct {
-	Router    *echo.Echo
-	Config    *config.Config
-	Logger    *logrus.Logger
-	Database  *gorm.DB
-	Validator *validator.Validate
-	Uploader  *cloudinary.Cloudinary
+	Router     *echo.Echo
+	Config     *config.Config
+	Logger     *logrus.Logger
+	Database   *gorm.DB
+	Validator  *validator.Validate
+	Uploader   *cloudinary.Cloudinary
+	PaymentLib snap.Client
 }
 
 func NewApp() *App {
@@ -32,12 +34,13 @@ func NewApp() *App {
 	})
 
 	app := &App{
-		Router:    r,
-		Config:    cfg,
-		Logger:    logger,
-		Database:  config.NewDatabase(cfg),
-		Uploader:  config.NewUploader(cfg),
-		Validator: validator.New(),
+		Router:     r,
+		Config:     cfg,
+		Logger:     logger,
+		Database:   config.NewDatabase(cfg),
+		Uploader:   config.NewUploader(cfg),
+		Validator:  validator.New(),
+		PaymentLib: config.NewConfig().NewPaymentLib(),
 	}
 
 	userHandler := registerUserHandler(app)
