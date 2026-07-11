@@ -18,6 +18,9 @@ type RouterConfig struct {
 	UserHandler         *handler.UserHandler
 	ProductHandler      *handler.ProductHandler
 	ProductImageHandler *handler.ProductImageHandler
+	AddressHandler      *handler.AddressHandler
+	OrderHandler        *handler.OrderHandler
+	PaymentHandler      *handler.PaymentHandler
 }
 
 func (c *RouterConfig) Register() {

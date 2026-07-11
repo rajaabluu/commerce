@@ -22,12 +22,15 @@ func registerUserHandler(app *App) *handler.UserHandler {
 
 func registerProductHandler(app *App) *handler.ProductHandler {
 	productRepository := repository.NewProductRepository()
+	productImagerepository := repository.NewProductImageRepository()
 	productService := service.NewProductService(
 		app.Config,
 		app.Logger,
 		app.Database,
 		app.Validator,
+		app.Uploader,
 		productRepository,
+		productImagerepository,
 	)
 	productHandler := handler.NewProductHandler(app.Logger, productService)
 
@@ -47,4 +50,44 @@ func registerProductImageHandler(app *App) *handler.ProductImageHandler {
 	productImageHandler := handler.NewProductImageHandler(app.Logger, productImageService)
 
 	return productImageHandler
+}
+
+func registerOrderHandler(app *App) *handler.OrderHandler {
+	productRepository := repository.NewProductRepository()
+	paymentRepository := repository.NewPaymentRepository()
+	orderRepository := repository.NewOrderRepository()
+	userRepository := repository.NewUserRepository()
+	addressRepository := repository.NewAddressRepository()
+	orderService := service.NewOrderService(
+		app.Config,
+		app.Logger,
+		app.Database,
+		app.Validator,
+		app.PaymentLib,
+
+		productRepository,
+		paymentRepository,
+		userRepository,
+		addressRepository,
+		orderRepository,
+	)
+
+	orderHandler := handler.NewOrderHandler(app.Logger, orderService)
+
+	return orderHandler
+}
+
+func registerPaymentHandler(app *App) *handler.PaymentHandler {
+	paymentRepository := repository.NewPaymentRepository()
+	paymentService := service.NewPaymentService(
+		app.Config,
+		app.Logger,
+		app.Database,
+		app.Validator,
+		paymentRepository,
+	)
+
+	paymentHandler := handler.NewPaymentHandler(app.Logger, paymentService)
+
+	return paymentHandler
 }

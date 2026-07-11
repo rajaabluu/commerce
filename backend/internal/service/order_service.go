@@ -11,6 +11,7 @@ import (
 	"github.com/midtrans/midtrans-go/snap"
 	"github.com/rajaabluu/commerce/backend/internal/config"
 	"github.com/rajaabluu/commerce/backend/internal/entity"
+	"github.com/rajaabluu/commerce/backend/internal/helper/mapper"
 	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/repository"
 	"github.com/sirupsen/logrus"
@@ -169,35 +170,13 @@ func (s *OrderService) Create(
 	itemDetails := make([]midtrans.ItemDetails, 0, len(order.OrderItems))
 
 	for _, item := range order.OrderItems {
-		itemDetails = append(itemDetails, midtrans.ItemDetails{
-			ID:    string(item.ID),
-			Name:  item.ProductName,
-			Price: item.Price,
-			Qty:   int32(item.Quantity),
-		})
+		itemDetails = append(itemDetails, mapper.ToMidtransItem(item))
 	}
 
-	snapRes, err := s.PaymentLib.CreateTransaction(&snap.Request{
-		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  string(order.ID),
-			GrossAmt: order.TotalPrice,
-		},
-		CreditCard: &snap.CreditCardDetails{
-			Secure: true,
-		},
-		CustomerDetail: &midtrans.CustomerDetails{
-			FName: user.Name,
-			Phone: address.Phone,
-			ShipAddr: &midtrans.CustomerAddress{
-				FName:    address.RecipientName,
-				Phone:    address.Phone,
-				City:     address.City,
-				Postcode: address.PostalCode,
-				Address:  address.StreetAddress,
-			},
-		},
-		Items: &itemDetails,
-	})
+	snapReq := mapper.ToSnapRequest(order, user, address)
+	snapReq.Items = &itemDetails
+
+	snapRes, err := s.PaymentLib.CreateTransaction(snapReq)
 
 	payment := &entity.Payment{
 		OrderID:     order.ID,
@@ -225,6 +204,12 @@ func (s *OrderService) Create(
 		})
 	}
 
+	paymentRes := &model.Payment{
+		OrderID:     order.ID,
+		Token:       snapRes.Token,
+		RedirectURL: snapRes.RedirectURL,
+	}
+
 	return &model.OrderResponse{
 		ID:            order.ID,
 		Status:        string(order.Status),
@@ -237,5 +222,6 @@ func (s *OrderService) Create(
 		PostalCode:    order.PostalCode,
 		StreetAddress: order.StreetAddress,
 		OrderItems:    items,
+		Payment:       *paymentRes,
 	}, nil
 }

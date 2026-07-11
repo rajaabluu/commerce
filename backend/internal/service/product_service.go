@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/rajaabluu/commerce/backend/internal/config"
@@ -20,8 +22,10 @@ type ProductService struct {
 
 	DB        *gorm.DB
 	Validator *validator.Validate
+	Uploader  *cloudinary.Cloudinary
 
-	ProductRepository *repository.ProductRepository
+	ProductRepository      *repository.ProductRepository
+	ProductImageRepository *repository.ProductImageRepository
 }
 
 func NewProductService(
@@ -29,7 +33,11 @@ func NewProductService(
 	logger *logrus.Logger,
 	DB *gorm.DB,
 	validator *validator.Validate,
-	productRepository *repository.ProductRepository) *ProductService {
+	uploader *cloudinary.Cloudinary,
+
+	productRepository *repository.ProductRepository,
+	productImageRepository *repository.ProductImageRepository,
+) *ProductService {
 
 	return &ProductService{
 		Config:            config,
@@ -199,13 +207,31 @@ func (s *ProductService) Update(ctx context.Context, req *model.UpdateProductReq
 func (s *ProductService) Delete(ctx context.Context, productID uint) error {
 	tx := s.DB.WithContext(ctx).Begin()
 
-	product, err := s.ProductRepository.FindById(tx, productID)
+	defer tx.Rollback()
+	product, err := s.ProductRepository.FindById(tx.Preload("Images"), productID)
+
+	ids := make([]uint, 0, len(product.Images))
+	imagePublicIds := make([]string, 0, len(product.Images))
+
+	if len(product.Images) > 0 {
+		for _, image := range product.Images {
+			ids = append(ids, image.ID)
+			imagePublicIds = append(imagePublicIds, image.PublicID)
+		}
+		_, err := s.Uploader.Admin.DeleteAssets(ctx, admin.DeleteAssetsParams{
+			PublicIDs: imagePublicIds,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		tx.Delete(&entity.ProductImage{}, ids)
+	}
 
 	if err != nil {
 		return err
 	}
-
-	defer tx.Rollback()
 
 	if err := s.ProductRepository.Delete(tx, product); err != nil {
 		s.Logger.Warnf("error on deleting item: %+v", err)

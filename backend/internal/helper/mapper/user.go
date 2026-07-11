@@ -6,11 +6,15 @@ import (
 )
 
 func ToUserResponse(user *entity.User) *model.UserResponse {
+	phone := ""
+	if user.Phone != nil {
+		phone = *user.Phone
+	}
 	return &model.UserResponse{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
-		Phone: *user.Phone,
+		Phone: phone,
 		Role:  string(user.Role),
 	}
 }

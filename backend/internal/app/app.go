@@ -46,11 +46,15 @@ func NewApp() *App {
 	userHandler := registerUserHandler(app)
 	productHandler := registerProductHandler(app)
 	productImageHandler := registerProductImageHandler(app)
+	orderHandler := registerOrderHandler(app)
+	paymentHandler := registerPaymentHandler(app)
 
 	routeCfg := &router.RouterConfig{
 		Route:               app.Router,
 		UserHandler:         userHandler,
 		ProductHandler:      productHandler,
+		OrderHandler:        orderHandler,
+		PaymentHandler:      paymentHandler,
 		ProductImageHandler: productImageHandler,
 		Logger:              app.Logger,
 		Middleware:          middleware.NewMiddleware(app.Logger, app.Config),
