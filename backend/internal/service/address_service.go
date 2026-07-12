@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rajaabluu/commerce/backend/internal/config"
@@ -42,12 +41,32 @@ func NewAddressService(
 	}
 }
 
+func (s *AddressService) GetAll(ctx context.Context, userID uint) ([]*model.AddressResponse, error) {
+	db := s.DB.WithContext(ctx)
+	addresses, err := s.AddressRepository.FindAll(db)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*model.AddressResponse, 0, len(addresses))
+	if len(addresses) > 0 {
+		for _, address := range addresses {
+			res = append(res, mapper.ToAddressResponse(address))
+		}
+	}
+	return res, nil
+}
+
 func (s *AddressService) Create(ctx context.Context, userID uint, req *model.CreateAddressRequest) (*model.AddressResponse, error) {
 	tx := s.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
 
-	address := mapper.ToAddressEntity(req, userID)
+	if err := s.Validator.Struct(req); err != nil {
+		return nil, err
+	}
+
+	address := mapper.ToAddressEntity(req)
+	address.UserID = userID
 
 	if err := s.AddressRepository.Create(tx, address); err != nil {
 		return nil, err
@@ -57,5 +76,6 @@ func (s *AddressService) Create(ctx context.Context, userID uint, req *model.Cre
 		return nil, err
 	}
 
-	return nil, errors.New("not implemented yet")
+	return mapper.ToAddressResponse(address), nil
+
 }

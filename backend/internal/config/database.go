@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/rajaabluu/commerce/backend/internal/entity"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -21,18 +20,18 @@ func NewDatabase(config *Config) *gorm.DB {
 	// db.Exec(`CREATE TYPE role AS ENUM ('ADMIN', 'CUSTOMER')`)
 	// db.Exec(`CREATE TYPE status AS ENUM ('APPROVED', 'PENDING', 'REJECTED')`)
 
-	if err := db.AutoMigrate(
-		&entity.User{},
-		&entity.Product{},
-		&entity.Category{},
-		&entity.Order{},
-		&entity.Payment{},
-		&entity.OrderItem{},
-		&entity.ProductImage{},
-		&entity.Address{},
-	); err != nil {
-		panic(fmt.Errorf("failed migrating database: %w", err))
-	}
+	// if err := db.AutoMigrate(
+	// 	&entity.User{},
+	// 	&entity.Product{},
+	// 	&entity.Category{},
+	// 	&entity.Order{},
+	// 	&entity.Payment{},
+	// 	&entity.OrderItem{},
+	// 	&entity.ProductImage{},
+	// 	&entity.Address{},
+	// ); err != nil {
+	// 	panic(fmt.Errorf("failed migrating database: %w", err))
+	// }
 
 	if err != nil {
 		panic(fmt.Errorf("error in connecting to database: %w", err))

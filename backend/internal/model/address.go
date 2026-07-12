@@ -1,7 +1,7 @@
 package model
 
 type CreateAddressRequest struct {
-	RecipientName string `json:"receipent_name" validate:"required"`
+	RecipientName string `json:"recipient_name" validate:"required"`
 	Phone         string `json:"phone" validate:"required"`
 
 	Province      string `json:"province" validate:"required"`

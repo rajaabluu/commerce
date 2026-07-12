@@ -39,7 +39,7 @@ func NewApp() *App {
 		Logger:     logger,
 		Database:   config.NewDatabase(cfg),
 		Uploader:   config.NewUploader(cfg),
-		Validator:  validator.New(),
+		Validator:  config.NewValidator(),
 		PaymentLib: config.NewConfig().NewPaymentLib(),
 	}
 
@@ -48,11 +48,13 @@ func NewApp() *App {
 	productImageHandler := registerProductImageHandler(app)
 	orderHandler := registerOrderHandler(app)
 	paymentHandler := registerPaymentHandler(app)
+	addressHandler := registerAddressHandler(app)
 
 	routeCfg := &router.RouterConfig{
 		Route:               app.Router,
 		UserHandler:         userHandler,
 		ProductHandler:      productHandler,
+		AddressHandler:      addressHandler,
 		OrderHandler:        orderHandler,
 		PaymentHandler:      paymentHandler,
 		ProductImageHandler: productImageHandler,

@@ -52,6 +52,14 @@ func registerProductImageHandler(app *App) *handler.ProductImageHandler {
 	return productImageHandler
 }
 
+func registerAddressHandler(app *App) *handler.AddressHandler {
+	addressRepository := repository.NewAddressRepository()
+	addressService := service.NewAddressService(app.Config, app.Logger, app.Database, app.Validator, addressRepository)
+	addressHandler := handler.NewAddressHandler(app.Logger, addressService)
+
+	return addressHandler
+}
+
 func registerOrderHandler(app *App) *handler.OrderHandler {
 	productRepository := repository.NewProductRepository()
 	paymentRepository := repository.NewPaymentRepository()
