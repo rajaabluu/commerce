@@ -15,4 +15,5 @@ type Response[T any] struct {
 type ErrorResponse struct {
 	Message string `json:"message,omitempty"`
 	Error   any    `json:"error,omitempty"`
+	Errors  any    `json:"errors,omitempty"`
 }

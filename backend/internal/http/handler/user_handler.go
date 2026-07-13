@@ -41,7 +41,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 		case errors.As(err, &ve):
 			return c.JSON(http.StatusUnprocessableEntity, &model.ErrorResponse{
 				Message: "validation error",
-				Error:   helper.GenerateValidationError(ve),
+				Errors:  helper.GenerateValidationError(ve),
 			})
 
 		case errors.Is(err, echo.ErrUnprocessableEntity):

@@ -83,7 +83,7 @@ func (h *ProductHandler) CreateNewProduct(c echo.Context) error {
 		case errors.As(err, &ve):
 			return c.JSON(http.StatusUnprocessableEntity, &model.ErrorResponse{
 				Message: "validation errors",
-				Error:   helper.GenerateValidationError(ve),
+				Errors:  helper.GenerateValidationError(ve),
 			})
 		}
 		return c.JSON(http.StatusInternalServerError, &model.ErrorResponse{

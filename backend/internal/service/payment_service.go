@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rajaabluu/commerce/backend/internal/config"
+	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/repository"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -41,5 +42,9 @@ func NewPaymentService(
 }
 
 func (s *PaymentService) Create(ctx context.Context, userID uint, req any) error {
+	return errors.New("not implemented yet")
+}
+
+func (s *PaymentService) Notification(ctx context.Context, req *model.MidtransNotificationRequest) error {
 	return errors.New("not implemented yet")
 }

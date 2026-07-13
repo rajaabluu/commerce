@@ -35,8 +35,12 @@ func (c *RouterConfig) Register() {
 	auth := api.Group("/auth")
 	users := api.Group("/users", c.Middleware.VerifyAuth)
 	products := api.Group("/products", c.Middleware.VerifyAuth)
+	orders := api.Group("/orders", c.Middleware.VerifyAuth)
+	payments := api.Group("/payments")
 
 	c.registerAuthRouter(auth)
 	c.registerUserRouter(users)
 	c.registerProductRouter(products)
+	c.registerOrderRouter(orders)
+	c.registerPaymentRouter(payments)
 }

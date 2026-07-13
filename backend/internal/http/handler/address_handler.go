@@ -59,7 +59,7 @@ func (h *AddressHandler) CreateNewAddress(c echo.Context) error {
 		errors := helper.GenerateValidationError(ve)
 		return c.JSON(http.StatusUnprocessableEntity, &model.ErrorResponse{
 			Message: "validation errors",
-			Error:   errors,
+			Errors:  errors,
 		})
 	}
 

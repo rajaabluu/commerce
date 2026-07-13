@@ -2,7 +2,6 @@ package model
 
 type CreateOrderRequest struct {
 	ShippingAddressID uint              `json:"shipping_address_id" validate:"required"`
-	PaymentMethod     string            `json:"payment_method" validate:"required"`
 	OrderItems        []CreateOrderItem `json:"items" validate:"required,min=1,dive"`
 }
 
