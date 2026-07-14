@@ -4,15 +4,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderStatus string
+// type OrderStatus string
 
-const (
-	OrderPending   OrderStatus = "PENDING"
-	OrderPaid      OrderStatus = "PAID"
-	OrderShipped   OrderStatus = "SHIPPED"
-	OrderCompleted OrderStatus = "COMPLETED"
-	OrderCancelled OrderStatus = "CANCELLED"
-)
+// const (
+// 	OrderPending   OrderStatus = "PENDING"
+// 	OrderPaid      OrderStatus = "PAID"
+// 	OrderShipped   OrderStatus = "SHIPPED"
+// 	OrderCompleted OrderStatus = "COMPLETED"
+// 	OrderCancelled OrderStatus = "CANCELLED"
+// )
 
 type Order struct {
 	gorm.Model
@@ -20,8 +20,6 @@ type Order struct {
 
 	UserID uint `gorm:"not null"`
 	User   User
-
-	Status OrderStatus `gorm:"type:varchar(20);default:'PENDING'"`
 
 	TotalPrice int64 `gorm:"not null"`
 

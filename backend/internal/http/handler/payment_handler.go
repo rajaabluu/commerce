@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"github.com/rajaabluu/commerce/backend/internal/model"
 	"github.com/rajaabluu/commerce/backend/internal/service"
 	"github.com/sirupsen/logrus"
@@ -29,7 +30,8 @@ func (h *PaymentHandler) HandlePaymentNotification(c echo.Context) error {
 			Message: "invalid notification req",
 		})
 	}
-	h.Logger.Debugf("%+v", *req)
-	// return errors.New("not implemented yet")
+	if err := h.PaymentService.Notification(c.Request().Context(), req); err != nil {
+		log.Warnf("error on handling notification +%v", err.Error())
+	}
 	return nil
 }

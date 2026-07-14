@@ -11,7 +11,7 @@ type CreateOrderItem struct {
 }
 
 type OrderItemResponse struct {
-	ID          uint   `json:"id"`
+	ID          uint   `json:"id,omitempty"`
 	ProductID   uint   `json:"product_id"`
 	ProductName string `json:"product_name"`
 	Price       int64  `json:"price"`
